@@ -23,8 +23,8 @@ Frontend application for ClassroomConnect - A personalized classroom engagement 
 
 ### Prerequisites
 
-- Node.js 18+ (you have v22.19.0 ✅)
-- npm 10+ (you have v10.9.3 ✅)
+- Node.js 18+ (version- v22.19.0 ✅)
+- npm 10+ (version- v10.9.3 ✅)
 
 ### Installation
 ```bash
