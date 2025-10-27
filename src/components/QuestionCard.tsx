@@ -1,7 +1,4 @@
-interface QuestionCardProps {
-  emoji: string;
-  text: string;
-}
+import type { QuestionCardProps } from "../types";
 
 export function QuestionCard({ emoji, text }: QuestionCardProps) {
   return (

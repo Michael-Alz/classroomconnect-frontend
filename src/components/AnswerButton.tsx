@@ -1,13 +1,4 @@
-interface AnswerButtonProps {
-  value: number;
-  text: string;
-  emoji: string;
-  color: string;
-  textColor: string;
-  onClick: (value: number) => void;
-  isSelected?: boolean;
-  ringColor?: string;
-}
+import type { AnswerButtonProps } from "../types";
 
 export function AnswerButton({
   value,
