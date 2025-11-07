@@ -1,88 +1,73 @@
-# ClassroomConnect Frontend
+# React + TypeScript + Vite
 
-Frontend application for ClassroomConnect - A personalized classroom engagement system for elementary students.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Features
+Currently, two official plugins are available:
 
-- **Student Survey** - One-time learning profile questionnaire
-- **Mood Check-In** - Daily emotional state tracking
-- **Personalized Activities** - Tailored 2-6 minute activities based on profile and mood
-- **Progress Tracking** - Streaks, check-ins, and achievements
-- **Kid-Friendly Design** - Designed for 7-8 year olds on iPad
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Tech Stack
+## React Compiler
 
-- **React** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **Tailwind CSS** - Styling
-- **React Router** - Navigation
-- **Axios** - API calls to backend
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Quick Start
+## Expanding the ESLint configuration
 
-### Prerequisites
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-- Node.js 18+ (version- v22.19.0 ✅)
-- npm 10+ (version- v10.9.3 ✅)
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-### Installation
-```bash
-# Clone the repository
-git clone https://github.com/YOUR-USERNAME/classroomconnect-frontend.git
-cd classroomconnect-frontend
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-Visit `http://localhost:5173` to see the app!
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-## Project Structure
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-src/
-├── components/     # Reusable UI components
-├── pages/          # Full page components (Survey, Home, etc.)
-├── services/       # API calls to backend
-├── types/          # TypeScript type definitions
-├── App.tsx         # Main app component
-└── main.tsx        # App entry point
-```
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-
-## Backend Integration
-
-This frontend connects to the ClassroomConnect backend API.
-
-**Backend repository:** [Link to backend repo]
-
-**API Base URL:** `http://localhost:8000/api` (development)
-
-## Team
-
-**Frontend Developers:**
-- Kole
-- Dayu
-
-**Backend Developers:**
-- Michael
-- Tommy
-
-## Week 1 Goals
-
-- ✅ Project setup
-- ✅ GitHub repository
-- 🔄 Build survey page with fake data
-- 🔄 Connect survey POST to backend API
-
-## License
-
-CS5500 Final Project
