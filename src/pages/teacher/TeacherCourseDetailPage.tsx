@@ -1,3 +1,4 @@
+// src/pages/teacher/TeacherCourseDetailPage.tsx
 import {
   Alert,
   AlertDescription,
@@ -7,7 +8,6 @@ import {
   Button,
   Card,
   CardBody,
-  CardHeader,
   FormControl,
   FormLabel,
   Grid,
@@ -21,10 +21,25 @@ import {
   Wrap,
   WrapItem,
   useToast,
+  HStack,
+  VStack,
+  Icon,
+  Flex,
+  Divider,
 } from '@chakra-ui/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import {
+  FiArrowLeft,
+  FiBookOpen,
+  FiCheckCircle,
+  FiGrid,
+  FiZap,
+  FiSave,
+  FiAlertCircle,
+  FiTag,
+} from 'react-icons/fi'
 import {
   autoGenerateCourseRecommendations,
   getCourse,
@@ -46,6 +61,7 @@ const parseCellKey = (key: string): { learningStyle: string | null; mood: string
 
 export function TeacherCourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const toast = useToast()
   const [selectedCell, setSelectedCell] = useState<string | null>(null)
@@ -162,14 +178,28 @@ export function TeacherCourseDetailPage() {
   const recommendations = recommendationsQuery.data
 
   if (recommendationsQuery.isLoading || courseQuery.isLoading) {
-    return <Text>Loading course details…</Text>
+    return (
+      <Box textAlign="center" py={12}>
+        <Text color="gray.500" fontSize="lg">
+          Loading course details...
+        </Text>
+      </Box>
+    )
   }
 
   if (!recommendations) {
     return (
-      <Alert status="error">
-        <AlertIcon />
-        <AlertDescription>Unable to load course information.</AlertDescription>
+      <Alert
+        status="error"
+        borderRadius="xl"
+        bg="red.50"
+        border="2px solid"
+        borderColor="red.200"
+      >
+        <AlertIcon color="red.500" />
+        <AlertDescription color="red.700" fontWeight="600">
+          Unable to load course information
+        </AlertDescription>
       </Alert>
     )
   }
@@ -186,211 +216,320 @@ export function TeacherCourseDetailPage() {
         ? 'Unable to generate recommendations.'
         : null
 
-  return (
-    <Stack spacing={6}>
-      <Stack spacing={1}>
-        <Heading size="lg">{courseQuery.data?.title ?? 'Course recommendations'}</Heading>
-        <Text color="gray.600">
-          Map each learning style + mood combination to an activity to drive personalized
-          recommendations in your live sessions.
-        </Text>
-      </Stack>
+  const totalAssignments = Object.keys(cellAssignments).length
+  const totalCells =
+    recommendations.learning_style_categories.length * recommendations.mood_labels.length
 
-      <Card>
-        <CardHeader>
-          <Heading size="md">Course configuration</Heading>
-          <Text fontSize="sm" color="gray.500">
-            Keep the course title and baseline survey up to date for future sessions.
-          </Text>
-        </CardHeader>
-        <CardBody>
-          <Stack spacing={4}>
-            <FormControl isRequired>
-              <FormLabel>Course title</FormLabel>
-              <Input value={courseTitle} onChange={(event) => setCourseTitle(event.target.value)} />
-            </FormControl>
-            <FormControl isRequired>
-              <FormLabel>Baseline survey</FormLabel>
-              <Select
-                placeholder={
-                  surveysQuery.isLoading ? 'Loading surveys…' : 'Select survey template'
-                }
-                value={baselineSurveyId}
-                onChange={(event) => setBaselineSurveyId(event.target.value)}
-                isDisabled={surveysQuery.isLoading || !surveysQuery.data?.length}
-              >
-                {surveysQuery.data?.map((survey) => (
-                  <option value={survey.id} key={survey.id}>
-                    {survey.title}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
-            <Stack spacing={1}>
-              <Text fontWeight="bold">Mood labels</Text>
-              <Wrap>
-                {courseQuery.data?.mood_labels.map((label) => (
-                  <WrapItem key={label}>
-                    <Badge>{label}</Badge>
-                  </WrapItem>
-                ))}
-              </Wrap>
-            </Stack>
-            <Text fontSize="sm" color="gray.600">
-              Requires re-baseline:{' '}
-              <strong>{courseQuery.data?.requires_rebaseline ? 'Yes' : 'No'}</strong>
+  return (
+    <Stack spacing={8}>
+      {/* Header */}
+      <Box>
+        <Button
+          leftIcon={<Icon as={FiArrowLeft} />}
+          variant="ghost"
+          onClick={() => navigate('/teacher/courses')}
+          mb={4}
+          fontWeight="600"
+        >
+          Back to Courses
+        </Button>
+
+        <HStack spacing={4} align="flex-start">
+          <Box
+            bgGradient="linear(135deg, brand.400, brand.600)"
+            color="white"
+            p={4}
+            borderRadius="2xl"
+            boxShadow="lg"
+          >
+            <Icon as={FiBookOpen} boxSize={8} />
+          </Box>
+          <VStack align="flex-start" spacing={1}>
+            <Heading size="lg" fontWeight="800">
+              {courseQuery.data?.title ?? 'Course Recommendations'}
+            </Heading>
+            <Text color="gray.600" fontSize="md">
+              Map each learning style + mood combination to an activity to drive personalized
+              recommendations in your live sessions.
             </Text>
-            {courseUpdateMutation.error instanceof ApiError ? (
-              <Alert status="error">
-                <AlertIcon />
-                <AlertDescription>{courseUpdateMutation.error.message}</AlertDescription>
-              </Alert>
-            ) : null}
-            <Button
-              alignSelf="flex-start"
-              colorScheme="brand"
-              onClick={() => courseUpdateMutation.mutate()}
-              isLoading={courseUpdateMutation.isPending}
-              isDisabled={!hasCourseChanges || !courseTitle.trim() || !baselineSurveyId}
-            >
-              Save course changes
-            </Button>
-          </Stack>
+          </VStack>
+        </HStack>
+      </Box>
+
+      {/* Course Configuration Card */}
+      <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+        <CardBody p={6}>
+          <VStack align="stretch" spacing={5}>
+            <HStack spacing={3}>
+              <Icon as={FiCheckCircle} boxSize={6} color="brand.500" />
+              <Heading size="md" fontWeight="700">
+                Course configuration
+              </Heading>
+            </HStack>
+
+            <Text fontSize="sm" color="gray.500">
+              Keep the course title and baseline survey up to date for future sessions.
+            </Text>
+
+            <Stack spacing={4}>
+              <FormControl isRequired>
+                <FormLabel fontWeight="600" fontSize="sm" mb={2}>
+                  Course title
+                </FormLabel>
+                <Input
+                  value={courseTitle}
+                  onChange={(event) => setCourseTitle(event.target.value)}
+                  size="lg"
+                  borderRadius="xl"
+                  border="2px solid"
+                  borderColor="gray.200"
+                  _hover={{ borderColor: 'brand.300' }}
+                  _focus={{
+                    borderColor: 'brand.400',
+                    boxShadow: '0 0 0 1px var(--chakra-colors-brand-400)',
+                  }}
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontWeight="600" fontSize="sm" mb={2}>
+                  Baseline survey
+                </FormLabel>
+                <Select
+                  placeholder={
+                    surveysQuery.isLoading ? 'Loading surveys…' : 'Select survey template'
+                  }
+                  value={baselineSurveyId}
+                  onChange={(event) => setBaselineSurveyId(event.target.value)}
+                  isDisabled={surveysQuery.isLoading || !surveysQuery.data?.length}
+                  size="lg"
+                  borderRadius="xl"
+                  border="2px solid"
+                  borderColor="gray.200"
+                  _hover={{ borderColor: 'brand.300' }}
+                  _focus={{
+                    borderColor: 'brand.400',
+                    boxShadow: '0 0 0 1px var(--chakra-colors-brand-400)',
+                  }}
+                >
+                  {surveysQuery.data?.map((survey) => (
+                    <option value={survey.id} key={survey.id}>
+                      {survey.title}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <Stack spacing={1}>
+                <HStack justify="space-between">
+                  <HStack spacing={2}>
+                    <Icon as={FiTag} boxSize={5} color="purple.500" />
+                    <Text fontWeight="bold">Mood labels</Text>
+                  </HStack>
+                  <Badge colorScheme="purple" fontSize="xs" px={2} py={1} borderRadius="full">
+                    {courseQuery.data?.mood_labels.length || 0} labels
+                  </Badge>
+                </HStack>
+                <Wrap>
+                  {courseQuery.data?.mood_labels.map((label) => (
+                    <WrapItem key={label}>
+                      <Badge colorScheme="purple" px={3} py={1} borderRadius="full">
+                        {label}
+                      </Badge>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Stack>
+
+              <Text fontSize="sm" color="gray.600">
+                Requires re-baseline:{' '}
+                <strong>{courseQuery.data?.requires_rebaseline ? 'Yes' : 'No'}</strong>
+              </Text>
+
+              {courseUpdateMutation.error instanceof ApiError ? (
+                <Alert status="error">
+                  <AlertIcon />
+                  <AlertDescription>{courseUpdateMutation.error.message}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              <Button
+                leftIcon={<Icon as={FiSave} />}
+                alignSelf="flex-start"
+                colorScheme="brand"
+                onClick={() => courseUpdateMutation.mutate()}
+                isLoading={courseUpdateMutation.isPending}
+                isDisabled={!hasCourseChanges || !courseTitle.trim() || !baselineSurveyId}
+                borderRadius="xl"
+                fontWeight="600"
+              >
+                Save course changes
+              </Button>
+            </Stack>
+          </VStack>
         </CardBody>
       </Card>
 
+      {/* Mapping Progress Card */}
+      <Card
+        borderRadius="2xl"
+        bgGradient="linear(135deg, purple.50, brand.50)"
+        border="2px solid"
+        borderColor="purple.100"
+      >
+        <CardBody p={6}>
+          <HStack justify="space-between" align="center">
+            <VStack align="flex-start" spacing={1}>
+              <Text fontSize="sm" fontWeight="600" color="gray.700">
+                Mapping Progress
+              </Text>
+              <Heading size="lg" fontWeight="800" color="brand.700">
+                {totalAssignments} / {totalCells}
+              </Heading>
+              <Text fontSize="xs" color="gray.600">
+                {totalCells - totalAssignments} combinations remaining
+              </Text>
+            </VStack>
+            <Button
+              leftIcon={<Icon as={FiZap} />}
+              colorScheme="purple"
+              onClick={() => autoGenerateMutation.mutate()}
+              isLoading={autoGenerateMutation.isPending}
+              isDisabled={!courseId || autoGenerateMutation.isPending}
+              size="lg"
+              borderRadius="xl"
+              fontWeight="600"
+            >
+              AI Auto-Map
+            </Button>
+          </HStack>
+        </CardBody>
+      </Card>
+
+      {/* Alerts */}
+      {autoGenerateErrorMessage ? (
+        <Alert status="error">
+          <AlertIcon />
+          <AlertDescription>{autoGenerateErrorMessage}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {isMapLocked ? (
+        <Alert status="info">
+          <AlertIcon />
+          <AlertDescription>
+            Generating recommendations… Editing is disabled until this completes.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {/* Mapping Grid */}
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
         <Card>
-          <CardHeader>
-            <Stack
-              direction={{ base: 'column', md: 'row' }}
-              justify="space-between"
-              alignItems={{ base: 'flex-start', md: 'center' }}
-              spacing={3}
-            >
+          <CardBody p={6}>
+            <Stack spacing={5}>
               <Box>
                 <Heading size="md">Recommendation map</Heading>
                 <Text fontSize="sm" color="gray.500">
-                  Tap a cell to select it, then choose an activity on the right.
+                  Tap a cell to select it, then choose an activity on the right.To change tap the same cell and choose another activity
                 </Text>
               </Box>
-              <Button
-                colorScheme="purple"
-                onClick={() => autoGenerateMutation.mutate()}
-                isLoading={autoGenerateMutation.isPending}
-                isDisabled={!courseId || autoGenerateMutation.isPending}
-                size="sm"
-              >
-                AI map
-              </Button>
-            </Stack>
-            {autoGenerateErrorMessage ? (
-              <Alert status="error" mt={3}>
-                <AlertIcon />
-                <AlertDescription>{autoGenerateErrorMessage}</AlertDescription>
-              </Alert>
-            ) : null}
-            {isMapLocked ? (
-              <Alert status="info" mt={3}>
-                <AlertIcon />
-                <AlertDescription>
-                  Generating recommendations… Editing is disabled until this completes.
-                </AlertDescription>
-              </Alert>
-            ) : null}
-          </CardHeader>
-          <CardBody>
-            <Stack spacing={6}>
-              {recommendations.learning_style_categories.map((style) => (
-                <Box key={style}>
-                  <Text fontWeight="bold" mb={3} textTransform="capitalize">
-                    {style} learners
-                  </Text>
-                  <Grid templateColumns="repeat(auto-fit, minmax(160px, 1fr))" gap={3}>
-                    {recommendations.mood_labels.map((mood) => {
-                      const key = makeCellKey(style, mood)
-                      const isActive = selectedCell === key
-                      const hasActivity = Boolean(cellAssignments[key])
-                      return (
-                        <GridItem
-                          key={key}
-                          borderWidth="1px"
-                          borderRadius="xl"
-                          p={3}
-                          cursor={isMapLocked ? 'not-allowed' : 'pointer'}
-                          bg={hasActivity ? 'purple.50' : 'white'}
-                          borderColor={isActive ? 'brand.500' : 'gray.200'}
-                          opacity={isMapLocked ? 0.6 : 1}
-                          onClick={() => {
-                            if (isMapLocked) return
-                            setSelectedCell(key)
-                          }}
-                        >
-                          <Stack spacing={1}>
-                            <Text fontSize="sm" color="gray.500">
-                              Mood
-                            </Text>
-                            <Text fontWeight="semibold">{mood}</Text>
-                            <Text fontSize="sm" color="gray.600">
-                              {getActivitySummary(cellAssignments[key])}
-                            </Text>
-                          </Stack>
-                        </GridItem>
-                      )
-                    })}
-                  </Grid>
-                </Box>
-              ))}
+
+              <Stack spacing={6}>
+                {recommendations.learning_style_categories.map((style) => (
+                  <Box key={style}>
+                    <Text fontWeight="bold" mb={3} textTransform="capitalize">
+                      {style} learners
+                    </Text>
+                    <Grid templateColumns="repeat(auto-fit, minmax(160px, 1fr))" gap={3}>
+                      {recommendations.mood_labels.map((mood) => {
+                        const key = makeCellKey(style, mood)
+                        const isActive = selectedCell === key
+                        const hasActivity = Boolean(cellAssignments[key])
+                        return (
+                          <GridItem
+                            key={key}
+                            borderWidth="1px"
+                            borderRadius="xl"
+                            p={3}
+                            cursor={isMapLocked ? 'not-allowed' : 'pointer'}
+                            bg={hasActivity ? 'purple.50' : 'white'}
+                            borderColor={isActive ? 'brand.500' : 'gray.200'}
+                            opacity={isMapLocked ? 0.6 : 1}
+                            onClick={() => {
+                              if (isMapLocked) return
+                              setSelectedCell(key)
+                            }}
+                          >
+                            <Stack spacing={1}>
+                              <Text fontSize="sm" color="gray.500">
+                                Mood
+                              </Text>
+                              <Text fontWeight="semibold">{mood}</Text>
+                              <Text fontSize="sm" color="gray.600">
+                                {getActivitySummary(cellAssignments[key])}
+                              </Text>
+                            </Stack>
+                          </GridItem>
+                        )
+                      })}
+                    </Grid>
+                  </Box>
+                ))}
+              </Stack>
             </Stack>
           </CardBody>
         </Card>
 
         <Card>
-          <CardHeader>
-            <Heading size="md">Activities</Heading>
-            <Text fontSize="sm" color="gray.500">
-              These come from your activity library. Assign them to the highlighted cell.
-            </Text>
-          </CardHeader>
-          <CardBody>
-            {activitiesQuery.isLoading ? (
-              <Text>Loading activities…</Text>
-            ) : activitiesQuery.data?.length ? (
-              <Stack spacing={3} maxH={{ base: 'auto', md: '600px' }} overflowY="auto" pr={2}>
-                {activitiesQuery.data.map((activity) => {
-                  const isSelected =
-                    selectedCell && cellAssignments[selectedCell] === activity.id
-                  return (
-                    <Box
-                      key={activity.id}
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      p={3}
-                      borderColor={isSelected ? 'brand.500' : 'gray.200'}
-                      bg={isSelected ? 'brand.50' : 'white'}
-                      cursor={isMapLocked ? 'not-allowed' : 'pointer'}
-                      opacity={isMapLocked ? 0.6 : 1}
-                      onClick={() => handleAssignActivity(activity.id)}
-                    >
-                      <Stack spacing={1}>
-                        <Heading size="sm">{activity.name}</Heading>
-                        <Text fontSize="sm" color="gray.600">
-                          {activity.summary}
-                        </Text>
-                        <Badge alignSelf="flex-start">{activity.type}</Badge>
-                      </Stack>
-                    </Box>
-                  )
-                })}
-              </Stack>
-            ) : (
-              <Alert status="info">
-                <AlertIcon />
-                <AlertDescription>
-                  No activities yet. Create one under “Create Activity”.
-                </AlertDescription>
-              </Alert>
-            )}
+          <CardBody p={6}>
+            <Stack spacing={5}>
+              <Box>
+                <Heading size="md">Activities</Heading>
+                <Text fontSize="sm" color="gray.500">
+                  These come from your activity library. Assign them to the highlighted cell.
+                </Text>
+              </Box>
+
+              {activitiesQuery.isLoading ? (
+                <Text>Loading activities…</Text>
+              ) : activitiesQuery.data?.length ? (
+                <Stack spacing={3} maxH={{ base: 'auto', md: '600px' }} overflowY="auto" pr={2}>
+                  {activitiesQuery.data.map((activity) => {
+                    const isSelected =
+                      selectedCell && cellAssignments[selectedCell] === activity.id
+                    return (
+                      <Box
+                        key={activity.id}
+                        borderWidth="1px"
+                        borderRadius="lg"
+                        p={3}
+                        borderColor={isSelected ? 'brand.500' : 'gray.200'}
+                        bg={isSelected ? 'brand.50' : 'white'}
+                        cursor={isMapLocked ? 'not-allowed' : 'pointer'}
+                        opacity={isMapLocked ? 0.6 : 1}
+                        onClick={() => handleAssignActivity(activity.id)}
+                      >
+                        <Stack spacing={1}>
+                          <Heading size="sm">{activity.name}</Heading>
+                          <Text fontSize="sm" color="gray.600">
+                            {activity.summary}
+                          </Text>
+                          <Badge alignSelf="flex-start">{activity.type}</Badge>
+                        </Stack>
+                      </Box>
+                    )
+                  })}
+                </Stack>
+              ) : (
+                <Alert status="info">
+                  <AlertIcon />
+                  <AlertDescription>
+                    No activities yet. Create one under "Create Activity".
+                  </AlertDescription>
+                </Alert>
+              )}
+            </Stack>
           </CardBody>
         </Card>
       </SimpleGrid>
@@ -403,11 +542,15 @@ export function TeacherCourseDetailPage() {
       ) : null}
 
       <Button
+        leftIcon={<Icon as={FiSave} />}
         colorScheme="purple"
         alignSelf="flex-start"
         onClick={() => saveMutation.mutate()}
         isLoading={saveMutation.isPending}
         isDisabled={isMapLocked}
+        size="lg"
+        borderRadius="xl"
+        fontWeight="600"
       >
         Save mappings
       </Button>

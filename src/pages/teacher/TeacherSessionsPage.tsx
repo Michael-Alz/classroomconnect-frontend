@@ -1,3 +1,4 @@
+// src/pages/teacher/TeacherSessionsPage.tsx
 import {
   Alert,
   AlertDescription,
@@ -13,10 +14,25 @@ import {
   Select,
   Stack,
   Text,
+  HStack,
+  VStack,
+  Icon,
+  SimpleGrid,
+  Flex,
+  Avatar,
 } from '@chakra-ui/react'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  FiPlayCircle,
+  FiClock,
+  FiCheckCircle,
+  FiPlus,
+  FiActivity,
+  FiEye,
+  FiArrowRight,
+} from 'react-icons/fi'
 import { listCourses } from '../../api/courses'
 import { listCourseSessions } from '../../api/sessions'
 
@@ -35,24 +51,52 @@ export function TeacherSessionsPage() {
     enabled: Boolean(courseId),
   })
 
-  return (
-    <Stack spacing={6}>
-      <Stack spacing={1}>
-        <Heading size="md">Session library</Heading>
-        <Text color="gray.600">
-          Select a course to review open and past sessions.
-        </Text>
-      </Stack>
+  const selectedCourse = coursesQuery.data?.find((c) => c.id === courseId)
+  const activeSessions = sessionsQuery.data?.filter((s) => !s.closed_at) || []
+  const closedSessions = sessionsQuery.data?.filter((s) => s.closed_at) || []
 
-      <Card>
-        <CardBody>
-          <Stack spacing={4}>
+  return (
+    <Stack spacing={8}>
+      {/* Header */}
+      <Box>
+        <Heading size="lg" fontWeight="800" color="gray.800" mb={2}>
+          Session Library 📚
+        </Heading>
+        <Text color="gray.600" fontSize="lg">
+          Review and manage your teaching sessions
+        </Text>
+      </Box>
+
+      {/* Course Selection Card */}
+      <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+        <CardBody p={6}>
+          <Stack spacing={6}>
+            <HStack spacing={3}>
+              <Icon as={FiPlayCircle} boxSize={6} color="brand.500" />
+              <Heading size="md" fontWeight="700">
+                Select Course
+              </Heading>
+            </HStack>
+
             <FormControl>
-              <FormLabel>Course</FormLabel>
+              <FormLabel fontWeight="600" fontSize="sm" mb={2}>
+                Choose a course to view its sessions
+              </FormLabel>
               <Select
-                placeholder={coursesQuery.isLoading ? 'Loading courses…' : 'Choose a course'}
+                placeholder={
+                  coursesQuery.isLoading ? 'Loading courses...' : 'Select a course'
+                }
                 value={courseId}
                 onChange={(event) => setCourseId(event.target.value)}
+                size="lg"
+                borderRadius="xl"
+                border="2px solid"
+                borderColor="gray.200"
+                _hover={{ borderColor: 'brand.300' }}
+                _focus={{
+                  borderColor: 'brand.400',
+                  boxShadow: '0 0 0 1px var(--chakra-colors-brand-400)',
+                }}
               >
                 {coursesQuery.data?.map((course) => (
                   <option key={course.id} value={course.id}>
@@ -62,67 +106,355 @@ export function TeacherSessionsPage() {
               </Select>
             </FormControl>
 
-            {courseId ? (
-              sessionsQuery.isLoading ? (
-                <Text>Loading sessions…</Text>
-              ) : sessionsQuery.isError ? (
-                <Alert status="error">
-                  <AlertIcon />
-                  <AlertDescription>Unable to load sessions for this course.</AlertDescription>
-                </Alert>
-              ) : sessionsQuery.data?.length ? (
-                <Stack spacing={3}>
-                  {sessionsQuery.data.map((session) => (
-                    <Box
-                      key={session.session_id}
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      p={4}
-                      display="flex"
-                      flexDirection={{ base: 'column', md: 'row' }}
-                      justifyContent="space-between"
-                      gap={3}
-                    >
-                      <Stack spacing={1}>
-                        <Heading size="sm">Session {session.session_id.slice(0, 8)}</Heading>
-                        <Text fontSize="sm" color="gray.500">
-                          Started {new Date(session.started_at).toLocaleString()}
-                        </Text>
-                        <Stack direction="row" spacing={2}>
-                          <Badge colorScheme={session.closed_at ? 'gray' : 'green'}>
-                            {session.closed_at ? 'Closed' : 'Open'}
-                          </Badge>
-                          <Badge colorScheme={session.require_survey ? 'purple' : 'orange'}>
-                            {session.require_survey ? 'Survey on' : 'Survey off'}
-                          </Badge>
-                        </Stack>
-                        <Text fontSize="sm">Join token: {session.join_token}</Text>
-                      </Stack>
-                      <Button
-                        alignSelf="flex-start"
-                        colorScheme="brand"
-                        onClick={() =>
-                          navigate(`/teacher/sessions/${session.session_id}/dashboard`)
-                        }
-                      >
-                        View details
-                      </Button>
-                    </Box>
-                  ))}
-                </Stack>
-              ) : (
-                <Text>No sessions yet for this course.</Text>
-              )
-            ) : (
-              <Text>Select a course to view sessions.</Text>
+            {selectedCourse && (
+              <HStack
+                p={4}
+                bg="brand.50"
+                borderRadius="xl"
+                border="1px solid"
+                borderColor="brand.100"
+                spacing={3}
+              >
+                <Icon as={FiCheckCircle} color="brand.500" boxSize={5} />
+                <VStack align="flex-start" spacing={0} flex={1}>
+                  <Text fontWeight="700" color="brand.900">
+                    {selectedCourse.title}
+                  </Text>
+                  <HStack fontSize="xs" color="brand.700" spacing={2}>
+                    <Text>
+                      {activeSessions.length} active • {closedSessions.length} closed
+                    </Text>
+                  </HStack>
+                </VStack>
+              </HStack>
             )}
           </Stack>
         </CardBody>
       </Card>
 
-      <Button variant="outline" onClick={() => navigate('/teacher/sessions/new')}>
-        Create a new session
-      </Button>
+      {/* Sessions Content */}
+      {courseId ? (
+        sessionsQuery.isLoading ? (
+          <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+            <CardBody p={12}>
+              <VStack spacing={4}>
+                <Icon as={FiActivity} boxSize={12} color="gray.300" />
+                <Text color="gray.500" fontSize="lg">
+                  Loading sessions...
+                </Text>
+              </VStack>
+            </CardBody>
+          </Card>
+        ) : sessionsQuery.isError ? (
+          <Alert
+            status="error"
+            borderRadius="xl"
+            bg="red.50"
+            border="2px solid"
+            borderColor="red.200"
+            p={6}
+          >
+            <AlertIcon color="red.500" />
+            <AlertDescription color="red.700" fontWeight="600">
+              Unable to load sessions for this course
+            </AlertDescription>
+          </Alert>
+        ) : sessionsQuery.data?.length ? (
+          <Stack spacing={6}>
+            {/* Active Sessions */}
+            {activeSessions.length > 0 && (
+              <Card borderRadius="2xl" border="2px solid" borderColor="green.100" boxShadow="xl">
+                <CardBody p={6}>
+                  <HStack spacing={3} mb={6}>
+                    <Icon as={FiActivity} boxSize={6} color="green.500" />
+                    <Heading size="md" fontWeight="700">
+                      Active Sessions ({activeSessions.length})
+                    </Heading>
+                    <Badge colorScheme="green" fontSize="xs" px={2} py={1} borderRadius="full">
+                      LIVE
+                    </Badge>
+                  </HStack>
+
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={5}>
+                    {activeSessions.map((session) => (
+                      <Card
+                        key={session.session_id}
+                        borderRadius="xl"
+                        border="2px solid"
+                        borderColor="green.200"
+                        bg="green.50"
+                        _hover={{
+                          transform: 'translateY(-4px)',
+                          boxShadow: 'lg',
+                          borderColor: 'green.300',
+                        }}
+                        transition="all 0.2s"
+                      >
+                        <CardBody p={5}>
+                          <VStack align="stretch" spacing={4}>
+                            {/* Session Header */}
+                            <HStack justify="space-between">
+                              <HStack spacing={3}>
+                                <Box
+                                  bg="green.500"
+                                  color="white"
+                                  p={2}
+                                  borderRadius="lg"
+                                >
+                                  <Icon as={FiPlayCircle} boxSize={5} />
+                                </Box>
+                                <VStack align="flex-start" spacing={0}>
+                                  <Text fontWeight="700" fontSize="sm" color="green.900">
+                                    Session {session.session_id.slice(0, 8)}...
+                                  </Text>
+                                  <HStack fontSize="xs" color="green.700">
+                                    <Icon as={FiClock} boxSize={3} />
+                                    <Text>
+                                      {new Date(session.started_at).toLocaleString()}
+                                    </Text>
+                                  </HStack>
+                                </VStack>
+                              </HStack>
+                              <Badge
+                                colorScheme="green"
+                                fontSize="xs"
+                                px={2}
+                                py={1}
+                                borderRadius="full"
+                              >
+                                🟢 Open
+                              </Badge>
+                            </HStack>
+
+                            {/* Session Details */}
+                            <Stack spacing={2}>
+                              <HStack justify="space-between" fontSize="sm">
+                                <Text color="green.700">Join Token:</Text>
+                                <Badge
+                                  colorScheme="green"
+                                  fontSize="sm"
+                                  px={3}
+                                  py={1}
+                                  borderRadius="lg"
+                                  fontFamily="mono"
+                                >
+                                  {session.join_token}
+                                </Badge>
+                              </HStack>
+                              <HStack justify="space-between" fontSize="sm">
+                                <Text color="green.700">Survey:</Text>
+                                <Badge
+                                  colorScheme={session.require_survey ? 'purple' : 'orange'}
+                                  fontSize="xs"
+                                  px={2}
+                                  py={1}
+                                  borderRadius="full"
+                                >
+                                  {session.require_survey ? 'Required' : 'Optional'}
+                                </Badge>
+                              </HStack>
+                            </Stack>
+
+                            {/* View Button */}
+                            <Button
+                              rightIcon={<Icon as={FiEye} />}
+                              colorScheme="green"
+                              onClick={() =>
+                                navigate(`/teacher/sessions/${session.session_id}/dashboard`)
+                              }
+                              size="sm"
+                              borderRadius="lg"
+                              fontWeight="600"
+                            >
+                              View Dashboard
+                            </Button>
+                          </VStack>
+                        </CardBody>
+                      </Card>
+                    ))}
+                  </SimpleGrid>
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Closed Sessions */}
+            {closedSessions.length > 0 && (
+              <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+                <CardBody p={6}>
+                  <HStack spacing={3} mb={6}>
+                    <Icon as={FiCheckCircle} boxSize={6} color="gray.500" />
+                    <Heading size="md" fontWeight="700">
+                      Closed Sessions ({closedSessions.length})
+                    </Heading>
+                  </HStack>
+
+                  <Stack spacing={3}>
+                    {closedSessions.map((session) => (
+                      <Card
+                        key={session.session_id}
+                        borderRadius="xl"
+                        border="2px solid"
+                        borderColor="gray.100"
+                        _hover={{
+                          borderColor: 'brand.200',
+                          bg: 'brand.50',
+                        }}
+                        transition="all 0.2s"
+                      >
+                        <CardBody p={4}>
+                          <Flex
+                            direction={{ base: 'column', md: 'row' }}
+                            justify="space-between"
+                            align={{ base: 'flex-start', md: 'center' }}
+                            gap={4}
+                          >
+                            <HStack spacing={3} flex={1}>
+                              <Avatar
+                                icon={<Icon as={FiPlayCircle} />}
+                                bg="gray.200"
+                                color="gray.600"
+                                size="sm"
+                              />
+                              <VStack align="flex-start" spacing={1}>
+                                <Text fontWeight="700" fontSize="sm">
+                                  Session {session.session_id.slice(0, 8)}...
+                                </Text>
+                                <HStack spacing={3} fontSize="xs" color="gray.500">
+                                  <HStack>
+                                    <Icon as={FiClock} boxSize={3} />
+                                    <Text>
+                                      {new Date(session.started_at).toLocaleDateString()}
+                                    </Text>
+                                  </HStack>
+                                  <Text>•</Text>
+                                  <Badge
+                                    size="sm"
+                                    colorScheme={session.require_survey ? 'purple' : 'orange'}
+                                  >
+                                    {session.require_survey ? 'Survey' : 'No Survey'}
+                                  </Badge>
+                                  <Text>•</Text>
+                                  <Text fontFamily="mono">{session.join_token}</Text>
+                                </HStack>
+                              </VStack>
+                            </HStack>
+
+                            <Button
+                              rightIcon={<Icon as={FiArrowRight} />}
+                              variant="outline"
+                              colorScheme="brand"
+                              onClick={() =>
+                                navigate(`/teacher/sessions/${session.session_id}/dashboard`)
+                              }
+                              size="sm"
+                              borderRadius="lg"
+                              fontWeight="600"
+                            >
+                              View Results
+                            </Button>
+                          </Flex>
+                        </CardBody>
+                      </Card>
+                    ))}
+                  </Stack>
+                </CardBody>
+              </Card>
+            )}
+          </Stack>
+        ) : (
+          // Empty State - No Sessions
+          <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+            <CardBody p={12}>
+              <VStack spacing={4}>
+                <Box
+                  bg="gray.50"
+                  p={6}
+                  borderRadius="full"
+                  border="2px dashed"
+                  borderColor="gray.200"
+                >
+                  <Icon as={FiPlayCircle} boxSize={12} color="gray.400" />
+                </Box>
+                <VStack spacing={2}>
+                  <Text fontSize="lg" fontWeight="600" color="gray.700">
+                    No sessions yet
+                  </Text>
+                  <Text color="gray.500" textAlign="center" maxW="md">
+                    Create your first session to start engaging with students
+                  </Text>
+                </VStack>
+                <Button
+                  leftIcon={<Icon as={FiPlus} />}
+                  colorScheme="brand"
+                  size="lg"
+                  onClick={() => navigate('/teacher/sessions/new')}
+                  mt={2}
+                  borderRadius="xl"
+                  fontWeight="600"
+                >
+                  Create First Session
+                </Button>
+              </VStack>
+            </CardBody>
+          </Card>
+        )
+      ) : (
+        // Empty State - No Course Selected
+        <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+          <CardBody p={12}>
+            <VStack spacing={4}>
+              <Box
+                bg="brand.50"
+                p={6}
+                borderRadius="full"
+                border="2px dashed"
+                borderColor="brand.200"
+              >
+                <Icon as={FiPlayCircle} boxSize={12} color="brand.400" />
+              </Box>
+              <VStack spacing={2}>
+                <Text fontSize="lg" fontWeight="600" color="gray.700">
+                  Select a course to begin
+                </Text>
+                <Text color="gray.500" textAlign="center" maxW="md">
+                  Choose a course from the dropdown above to view its sessions
+                </Text>
+              </VStack>
+            </VStack>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Create New Session Button */}
+      <Card
+        borderRadius="2xl"
+        border="2px dashed"
+        borderColor="brand.200"
+        bg="brand.50"
+        cursor="pointer"
+        onClick={() => navigate('/teacher/sessions/new')}
+        _hover={{
+          borderColor: 'brand.400',
+          bg: 'brand.100',
+          transform: 'translateY(-2px)',
+          boxShadow: 'lg',
+        }}
+        transition="all 0.2s"
+      >
+        <CardBody p={6}>
+          <HStack spacing={4} justify="center">
+            <Icon as={FiPlus} boxSize={6} color="brand.500" />
+            <VStack align="flex-start" spacing={0}>
+              <Text fontWeight="700" fontSize="lg" color="brand.700">
+                Create New Session
+              </Text>
+              <Text fontSize="sm" color="brand.600">
+                Start a new interactive teaching session
+              </Text>
+            </VStack>
+          </HStack>
+        </CardBody>
+      </Card>
     </Stack>
   )
 }

@@ -179,7 +179,7 @@ export function StudentSignupPage() {
 
                 <Button
                   type="submit"
-                  colorScheme="mint"
+                  colorScheme="brand"
                   size="lg"
                   borderRadius="lg"
                   isLoading={mutation.isPending}

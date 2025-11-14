@@ -9,10 +9,29 @@ import {
   Text,
   useDisclosure,
   useBreakpointValue,
-  useToken,
+  Avatar,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+  Icon,
+  VStack,
+  Badge,
 } from '@chakra-ui/react'
-import { Link as RouterLink, Outlet } from 'react-router-dom'
+import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom'
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons'
+import { 
+  FiHome, 
+  FiBookOpen, 
+  FiClipboard, 
+  FiGrid, 
+  FiPlayCircle,
+  FiLogOut,
+  FiSettings,
+  FiCode,
+  FiUserPlus,
+} from 'react-icons/fi'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../contexts/AuthContext'
@@ -21,10 +40,13 @@ import { getStudentProfile } from '../../api/students'
 interface NavItem {
   label: string
   to: string
+  icon?: any
+  badge?: string
 }
 
 export function AppLayout() {
   const { role, isTeacher, isStudent, logout } = useAuth()
+  const navigate = useNavigate()
   const studentProfileQuery = useQuery({
     queryKey: ['studentProfile'],
     queryFn: getStudentProfile,
@@ -35,112 +57,358 @@ export function AppLayout() {
   const navItems = useMemo<NavItem[]>(() => {
     if (isTeacher) {
       return [
-        { label: 'Courses', to: '/teacher/courses' },
-        { label: 'New Survey', to: '/teacher/surveys/new' },
-        { label: 'New Activity', to: '/teacher/activities/new' },
-        { label: 'New Session', to: '/teacher/sessions/new' },
+        { label: 'Courses', to: '/teacher/courses', icon: FiBookOpen },
+        { label: 'New Survey', to: '/teacher/surveys/new', icon: FiClipboard },
+        { label: 'New Activity', to: '/teacher/activities/new', icon: FiGrid },
+        { label: 'New Session', to: '/teacher/sessions/new', icon: FiPlayCircle},
       ]
     }
     if (isStudent) {
       return [
-        { label: 'Dashboard', to: '/student' },
-        { label: 'Join Session', to: '/student?tab=join' },
-        { label: 'Scan QR', to: '/scan' },
+        { label: 'Dashboard', to: '/student', icon: FiHome },
+        { label: 'Join Session', to: '/student?tab=join', icon: FiUserPlus },
+        { label: 'Scan QR', to: '/scan', icon: FiCode },
       ]
     }
+    // Guest navigation - simplified (login buttons are separate)
     return [
-      { label: 'Home', to: '/' },
-      { label: 'Teacher Login', to: '/login/teacher' },
-      { label: 'Student Login', to: '/login/student' },
-      { label: 'Guest Join', to: '/guest/join' },
+      { label: 'Home', to: '/', icon: FiHome },
+      { label: 'Guest Join', to: '/guest/join', icon: FiUserPlus },
     ]
   }, [isStudent, isTeacher])
 
   const showLogout = Boolean(role)
   const navSpacing = useBreakpointValue({ base: 2, md: 4 })
-  const [gradientTop, gradientBottom] = useToken('surfaces', [
-    'gradientTop',
-    'gradientBottom',
-  ])
+  const studentName = studentProfileQuery.data?.full_name || 'Student'
+  const initials = studentName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  // Get home route based on role
+  const homeRoute = isTeacher ? '/teacher/courses' : isStudent ? '/student' : '/'
 
   return (
-    <Box minH="100vh" bgGradient={`linear(to-b, ${gradientTop}, ${gradientBottom})`}>
+    <Box minH="100vh" bg="surfaces.canvas">
+      {/* Navigation Bar */}
       <Box
         position="sticky"
         top="0"
-        zIndex="10"
-        bg="rgba(255, 255, 255, 0.92)"
-        borderBottomWidth="1px"
+        zIndex="sticky"
+        bg="white"
+        borderBottomWidth="2px"
+        borderColor="gray.100"
         backdropFilter="blur(10px)"
+        boxShadow="sm"
       >
-        <Container maxW="6xl" py={3}>
+        <Container maxW="8xl" py={4}>
           <Flex align="center" justify="space-between">
-            <RouterLink to="/">
-              <Text fontSize="xl" fontWeight="bold">
-                ClassConnect
-              </Text>
+            {/* Logo - Routes to appropriate home based on role */}
+            <RouterLink to={homeRoute}>
+              <HStack spacing={3} _hover={{ transform: 'scale(1.02)' }} transition="all 0.2s">
+                <Box
+                  bgGradient="linear(to-r, brand.400, brand.600)"
+                  color="white"
+                  p={2}
+                  borderRadius="xl"
+                  fontSize="xl"
+                  boxShadow="md"
+                >
+                  
+                </Box>
+                <VStack align="flex-start" spacing={0}>
+                  <Text fontSize="xl" fontWeight="800" color="gray.800">
+                    ClassConnect
+                  </Text>
+                  {isTeacher && (
+                    <Text fontSize="xs" color="brand.600" fontWeight="600">
+                      Teacher Portal
+                    </Text>
+                  )}
+                  {isStudent && (
+                    <Text fontSize="xs" color="accent.600" fontWeight="600">
+                      Student Portal
+                    </Text>
+                  )}
+                </VStack>
+              </HStack>
             </RouterLink>
+
+            {/* Desktop Navigation */}
             <HStack spacing={navSpacing} display={{ base: 'none', md: 'flex' }}>
               {navItems.map((item) => (
                 <Button
                   key={item.to}
                   as={RouterLink}
                   to={item.to}
+                  leftIcon={item.icon ? <Icon as={item.icon} /> : undefined}
                   variant="ghost"
-                  size="sm"
+                  size="md"
+                  fontWeight="600"
+                  borderRadius="xl"
+                  position="relative"
+                  _hover={{
+                    bg: isTeacher ? 'brand.50' : isStudent ? 'accent.50' : 'gray.100',
+                    transform: 'translateY(-2px)',
+                  }}
+                  transition="all 0.2s"
                 >
                   {item.label}
+                  {item.badge && (
+                    <Badge
+                      position="absolute"
+                      top="-2"
+                      right="-2"
+                      colorScheme="red"
+                      fontSize="xs"
+                      borderRadius="full"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
                 </Button>
               ))}
-              {showLogout ? (
-                <Button size="sm" variant="solid" colorScheme="red" onClick={logout}>
-                  Logout
-                </Button>
-              ) : null}
-              {isStudent && studentProfileQuery.data ? (
-                <Text fontSize="sm" color="gray.600">
-                  {studentProfileQuery.data.full_name}
-                </Text>
-              ) : null}
+
+              {/* User Menu (Authenticated) */}
+{/* User Menu (Authenticated) */}
+{showLogout && (
+  <Menu placement="bottom-end" gutter={8}>
+    <MenuButton
+      as={Button}
+      variant="ghost"
+      borderRadius="full"
+      p={0}
+      h="auto"
+      _hover={{ transform: 'scale(1.05)' }}
+      transition="all 0.2s"
+    >
+      <HStack spacing={3}>
+        {isStudent && (
+          <Text fontSize="sm" fontWeight="600" color="gray.700">
+            {studentName}
+          </Text>
+        )}
+        <Avatar
+          size="sm"
+          name={isStudent ? studentName : 'Teacher'}
+          bg={isTeacher ? 'brand.400' : 'accent.400'}
+          color="white"
+          fontWeight="700"
+        >
+          {isStudent ? initials : ''}
+        </Avatar>
+      </HStack>
+    </MenuButton>
+    <MenuList
+      borderRadius="xl"
+      border="2px solid"
+      borderColor="gray.100"
+      boxShadow="xl"
+      py={2}
+      w="280px"
+      zIndex={1500}
+      overflow="visible"
+    >
+      <Box px={4} py={3} w="full">
+        <Text fontSize="sm" fontWeight="700" color="gray.800" noOfLines={1}>
+          {isStudent ? studentName : 'Teacher Account'}
+        </Text>
+        <Text fontSize="xs" color="gray.500" noOfLines={1}>
+          {isTeacher ? 'Teacher Portal' : 'Student Portal'}
+        </Text>
+      </Box>
+      <MenuDivider />
+      <MenuItem
+        icon={<Icon as={FiSettings} />}
+        borderRadius="lg"
+        mx={2}
+        fontSize="sm"
+        fontWeight="500"
+      >
+        Settings
+      </MenuItem>
+      <MenuDivider />
+      <MenuItem
+        icon={<Icon as={FiLogOut} />}
+        color="red.600"
+        borderRadius="lg"
+        mx={2}
+        fontSize="sm"
+        fontWeight="500"
+        onClick={handleLogout}
+      >
+        Logout
+      </MenuItem>
+    </MenuList>
+  </Menu>
+)}
+
+              {/* Guest Actions */}
+              {!showLogout && (
+                <HStack spacing={2}>
+                  <Button
+                    as={RouterLink}
+                    to="/login/teacher"
+                    variant="outline"
+                    colorScheme="sunshine"
+                    size="md"
+                    borderRadius="xl"
+                    fontWeight="600"
+                  >
+                    Teacher Login
+                  </Button>
+                  <Button
+                    as={RouterLink}
+                    to="/login/student"
+                    colorScheme="sunshine"
+                    size="md"
+                    borderRadius="xl"
+                    fontWeight="600"
+                  >
+                    Student Login
+                  </Button>
+                </HStack>
+              )}
             </HStack>
+
+            {/* Mobile Menu Toggle */}
             <IconButton
               aria-label="Toggle navigation"
               icon={mobileNav.isOpen ? <CloseIcon /> : <HamburgerIcon />}
               variant="ghost"
               display={{ base: 'inline-flex', md: 'none' }}
               onClick={mobileNav.onToggle}
+              borderRadius="xl"
+              size="lg"
             />
           </Flex>
-          {mobileNav.isOpen ? (
-            <Stack spacing={2} mt={4} pb={4} display={{ md: 'none' }}>
+
+          {/* Mobile Navigation Menu */}
+          {mobileNav.isOpen && (
+            <Stack
+              spacing={2}
+              mt={4}
+              pb={4}
+              display={{ md: 'none' }}
+              borderTop="1px solid"
+              borderColor="gray.100"
+              pt={4}
+            >
               {navItems.map((item) => (
                 <Button
                   key={item.to}
                   as={RouterLink}
                   to={item.to}
+                  leftIcon={item.icon ? <Icon as={item.icon} /> : undefined}
                   variant="ghost"
                   justifyContent="flex-start"
                   onClick={mobileNav.onClose}
+                  size="lg"
+                  borderRadius="xl"
+                  fontWeight="600"
+                  position="relative"
+                  _hover={{
+                    bg: isTeacher ? 'brand.50' : isStudent ? 'accent.50' : 'gray.100',
+                  }}
                 >
                   {item.label}
+                  {item.badge && (
+                    <Badge
+                      ml={2}
+                      colorScheme="red"
+                      fontSize="xs"
+                      borderRadius="full"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
                 </Button>
               ))}
-              {isStudent && studentProfileQuery.data ? (
-                <Text fontSize="sm" color="gray.600">
-                  {studentProfileQuery.data.full_name}
-                </Text>
-              ) : null}
-              {showLogout ? (
-                <Button variant="outline" colorScheme="red" onClick={logout}>
+
+              {/* Mobile Login Buttons for Guests */}
+              {!showLogout && (
+                <Stack spacing={2} mt={2}>
+                  <Button
+                    as={RouterLink}
+                    to="/login/teacher"
+                    variant="outline"
+                    colorScheme="brand"
+                    size="lg"
+                    borderRadius="xl"
+                    fontWeight="600"
+                    onClick={mobileNav.onClose}
+                  >
+                    Teacher Login
+                  </Button>
+                  <Button
+                    as={RouterLink}
+                    to="/login/student"
+                    colorScheme="accent"
+                    size="lg"
+                    borderRadius="xl"
+                    fontWeight="600"
+                    onClick={mobileNav.onClose}
+                  >
+                    Student Login
+                  </Button>
+                </Stack>
+              )}
+
+              {isStudent && studentProfileQuery.data && (
+                <Box
+                  bg="accent.50"
+                  p={3}
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="accent.100"
+                >
+                  <HStack spacing={3}>
+                    <Avatar
+                      size="sm"
+                      name={studentName}
+                      bg="accent.400"
+                      color="white"
+                    />
+                    <VStack align="flex-start" spacing={0}>
+                      <Text fontSize="sm" fontWeight="700">
+                        {studentName}
+                      </Text>
+                      <Text fontSize="xs" color="gray.600">
+                        Student Account
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </Box>
+              )}
+
+              {showLogout && (
+                <Button
+                  leftIcon={<Icon as={FiLogOut} />}
+                  variant="outline"
+                  colorScheme="red"
+                  onClick={handleLogout}
+                  size="lg"
+                  borderRadius="xl"
+                  fontWeight="600"
+                >
                   Logout
                 </Button>
-              ) : null}
+              )}
             </Stack>
-          ) : null}
+          )}
         </Container>
       </Box>
+
+      {/* Main Content */}
       <Box as="main" py={{ base: 8, md: 12 }}>
-        <Container maxW="6xl">
+        <Container maxW="8xl">
           <Outlet />
         </Container>
       </Box>

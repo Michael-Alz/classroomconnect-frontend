@@ -1,3 +1,4 @@
+// src/App.tsx
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
 import { TeacherLayout } from './components/layout/TeacherLayout'
@@ -32,6 +33,37 @@ import { NotFoundPage } from './pages/NotFoundPage'
 function App() {
   return (
     <Routes>
+      {/* Teacher Routes - Use TeacherLayout ONLY (no AppLayout) */}
+      <Route
+        path="/teacher"
+        element={
+          <RequireAuth roles={['teacher']}>
+            <TeacherLayout />
+          </RequireAuth>
+        }
+      >
+        <Route index element={<Navigate to="courses" replace />} />
+        <Route path="courses" element={<TeacherCoursesPage />} />
+        <Route path="courses/:courseId" element={<TeacherCourseDetailPage />} />
+        <Route path="surveys" element={<TeacherSurveysPage />} />
+        <Route path="surveys/new" element={<TeacherSurveyCreatePage />} />
+        <Route path="surveys/:surveyId" element={<TeacherSurveyDetailPage />} />
+        <Route path="activities" element={<TeacherActivitiesPage />} />
+        <Route path="activities/new" element={<TeacherActivityCreatePage />} />
+        <Route path="activities/:activityId" element={<TeacherActivityDetailPage />} />
+        <Route path="activity-types" element={<TeacherActivityTypesPage />} />
+        <Route path="activity-types/new" element={<TeacherActivityTypeCreatePage />} />
+        <Route path="activity-types/:typeName" element={<TeacherActivityTypeDetailPage />} />
+        <Route path="sessions" element={<TeacherSessionsPage />} />
+        <Route path="sessions/new" element={<TeacherSessionCreatePage />} />
+        <Route path="sessions/:sessionId" element={<TeacherSessionDashboardPage />} />
+        <Route
+          path="sessions/:sessionId/dashboard"
+          element={<TeacherSessionDashboardPage />}
+        />
+      </Route>
+
+      {/* All other routes - Use AppLayout (top navigation) */}
       <Route path="/" element={<AppLayout />}>
         <Route index element={<LandingPage />} />
         <Route path="login">
@@ -55,34 +87,6 @@ function App() {
             </RequireAuth>
           }
         />
-        <Route
-          path="teacher"
-          element={
-            <RequireAuth roles={['teacher']}>
-              <TeacherLayout />
-            </RequireAuth>
-          }
-        >
-          <Route index element={<Navigate to="courses" replace />} />
-          <Route path="courses" element={<TeacherCoursesPage />} />
-          <Route path="courses/:courseId" element={<TeacherCourseDetailPage />} />
-          <Route path="surveys" element={<TeacherSurveysPage />} />
-          <Route path="surveys/new" element={<TeacherSurveyCreatePage />} />
-          <Route path="surveys/:surveyId" element={<TeacherSurveyDetailPage />} />
-          <Route path="activities" element={<TeacherActivitiesPage />} />
-          <Route path="activities/new" element={<TeacherActivityCreatePage />} />
-          <Route path="activities/:activityId" element={<TeacherActivityDetailPage />} />
-          <Route path="activity-types" element={<TeacherActivityTypesPage />} />
-          <Route path="activity-types/new" element={<TeacherActivityTypeCreatePage />} />
-          <Route path="activity-types/:typeName" element={<TeacherActivityTypeDetailPage />} />
-          <Route path="sessions" element={<TeacherSessionsPage />} />
-          <Route path="sessions/new" element={<TeacherSessionCreatePage />} />
-          <Route path="sessions/:sessionId" element={<TeacherSessionDashboardPage />} />
-          <Route
-            path="sessions/:sessionId/dashboard"
-            element={<TeacherSessionDashboardPage />}
-          />
-        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

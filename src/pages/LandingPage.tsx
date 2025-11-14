@@ -45,15 +45,15 @@ export function LandingPage() {
     });
 
   const tiles = [
-    { bg: "blush.100", icon: FiBookOpen, tag: "Explore", tagBg: "mint.400" }, // learning
-    { bg: "white", icon: FiPlayCircle, tag: "Watch", tagBg: "mint.300" }, // video
+    { bg: "blush.100", icon: FiBookOpen, tag: "Explore", tagBg: "mint.400"}, // learning
+    { bg: "white", icon: FiPlayCircle, tag: "Watch", tagBg: "blue.300" }, // video
     { bg: "mint.100", icon: FiHeadphones, tag: "Listen", tagBg: "brand.300" }, // audio
     {
       bg: "brand.100",
       icon: FiImage,
       tag: "Gallery",
       tagBg: "blush.500",
-      tagColor: "white",
+      tagColor: "black",
     }, // pictures
   ];
 
@@ -130,9 +130,9 @@ export function LandingPage() {
                 textAlign={{ base: "center", lg: "left" }}
                 color="ink.700"
               >
-                Kids have fun you see{" "}
+                Kids have fun {" "}<br></br>
                 <Text as="span" color="blush.600">
-                  learning progress
+                you see learning progress.
                 </Text>
               </Heading>
 
@@ -296,8 +296,8 @@ export function LandingPage() {
                   as={RouterLink}
                   to="/login/teacher"
                   borderRadius="lg"
-                  colorScheme="mint"
-                  color="mint.900"
+                  colorScheme="brand"
+                  
                 >
                   Login
                 </Button>
@@ -305,9 +305,9 @@ export function LandingPage() {
                   as={RouterLink}
                   to="/signup/teacher"
                   variant="outline"
-                  colorScheme="mint"
+                  colorScheme="brand"
                   borderRadius="lg"
-                  color="mint.900"
+                  color="ink.700"
                 >
                   Sign up
                 </Button>
@@ -346,9 +346,9 @@ export function LandingPage() {
                 <Button
                   as={RouterLink}
                   to="/login/student"
-                  colorScheme="mint"
+                  colorScheme="brand"
                   borderRadius="lg"
-                  color="mint.900"
+                  color="ink.900"
                 >
                   Student Login
                 </Button>
@@ -356,9 +356,9 @@ export function LandingPage() {
                   as={RouterLink}
                   to="/signup/student"
                   variant="outline"
-                  colorScheme="mint"
+                  colorScheme="brand"
                   borderRadius="lg"
-                  color="mint.900"
+                  color="ink.900"
                 >
                   Student Signup
                 </Button>
@@ -370,7 +370,7 @@ export function LandingPage() {
                 colorScheme="mint"
                 leftIcon={<Icon as={FiUsers} />}
                 borderRadius="lg"
-                color="sky.900"
+                color="mint.900"
               >
                 Join as Guest
               </Button>

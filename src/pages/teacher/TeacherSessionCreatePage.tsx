@@ -1,3 +1,4 @@
+// src/pages/teacher/TeacherSessionCreatePage.tsx
 import {
   Alert,
   AlertDescription,
@@ -13,11 +14,25 @@ import {
   Select,
   Stack,
   Switch,
+  Text,
+  HStack,
+  VStack,
+  Icon,
+  Badge,
+  Divider,
+  FormHelperText,
 } from '@chakra-ui/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import {
+  FiPlayCircle,
+  FiArrowLeft,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiMessageSquare,
+} from 'react-icons/fi'
 import { listCourses, createCourseSession } from '../../api/courses'
 import { ApiError } from '../../api/client'
 
@@ -52,60 +67,314 @@ export function TeacherSessionCreatePage() {
     sessionMutation.mutate()
   }
 
-  return (
-    <Stack spacing={6}>
-      <Card>
-        <CardBody>
-          <Box as="form" onSubmit={handleSubmit}>
-            <Stack spacing={4}>
-              <Heading size="md">Create session</Heading>
-              <FormControl isRequired>
-                <FormLabel>Course</FormLabel>
-                <Select
-                  placeholder="Select course"
-                  value={courseId}
-                  onChange={(event) => setCourseId(event.target.value)}
-                >
-                  {coursesQuery.data?.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.title}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl display="flex" alignItems="center">
-                <FormLabel mb="0">Require survey</FormLabel>
-                <Switch
-                  isChecked={requireSurvey}
-                  onChange={(event) => setRequireSurvey(event.target.checked)}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Mood prompt</FormLabel>
-                <Input value={moodPrompt} onChange={(event) => setMoodPrompt(event.target.value)} />
-              </FormControl>
-              {sessionMutation.error instanceof ApiError ? (
-                <Alert status="error">
-                  <AlertIcon />
-                  <AlertDescription>{sessionMutation.error.message}</AlertDescription>
-                </Alert>
-              ) : null}
-              <Button
-                type="submit"
-                colorScheme="purple"
-                isLoading={sessionMutation.isPending}
-                isDisabled={!courseId}
-              >
-                Create session
-              </Button>
-            </Stack>
-          </Box>
-        </CardBody>
-      </Card>
+  const selectedCourse = coursesQuery.data?.find((c) => c.id === courseId)
 
-      <Button variant="outline" onClick={() => navigate('/teacher/sessions')}>
-        View session library
-      </Button>
+  return (
+    <Stack spacing={8}>
+      {/* Header */}
+      <Box>
+        <Button
+          leftIcon={<Icon as={FiArrowLeft} />}
+          variant="ghost"
+          onClick={() => navigate('/teacher/sessions')}
+          mb={4}
+          fontWeight="600"
+        >
+          Back to Sessions
+        </Button>
+
+        <HStack spacing={4} align="flex-start">
+          <Box
+            bgGradient="linear(135deg, #10B981, #059669)"
+            color="white"
+            p={4}
+            borderRadius="2xl"
+            boxShadow="lg"
+          >
+            <Icon as={FiPlayCircle} boxSize={8} />
+          </Box>
+          <VStack align="flex-start" spacing={1}>
+            <Heading size="lg" fontWeight="800">
+              Launch New Session
+            </Heading>
+            <Text color="gray.600" fontSize="md">
+              Start an interactive learning session for your students
+            </Text>
+          </VStack>
+        </HStack>
+      </Box>
+
+      {/* Main Form */}
+      <Box as="form" onSubmit={handleSubmit}>
+        <Stack spacing={6}>
+          {/* Course Selection Card */}
+          <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+            <CardBody p={6}>
+              <VStack align="stretch" spacing={5}>
+                <HStack spacing={3}>
+                  <Icon as={FiCheckCircle} boxSize={6} color="brand.500" />
+                  <Heading size="md" fontWeight="700">
+                    Select Course
+                  </Heading>
+                  <Badge colorScheme="red" fontSize="xs" px={2} py={1} borderRadius="full">
+                    Required
+                  </Badge>
+                </HStack>
+
+                <FormControl isRequired>
+                  <FormLabel fontWeight="600" fontSize="sm" mb={2}>
+                    Which course is this session for?
+                  </FormLabel>
+                  <Select
+                    placeholder={
+                      coursesQuery.isLoading
+                        ? 'Loading courses...'
+                        : 'Choose a course'
+                    }
+                    value={courseId}
+                    onChange={(event) => setCourseId(event.target.value)}
+                    size="lg"
+                    borderRadius="xl"
+                    border="2px solid"
+                    borderColor="gray.200"
+                    _hover={{ borderColor: 'brand.300' }}
+                    _focus={{
+                      borderColor: 'brand.400',
+                      boxShadow: '0 0 0 1px var(--chakra-colors-brand-400)',
+                    }}
+                  >
+                    {coursesQuery.data?.map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.title}
+                      </option>
+                    ))}
+                  </Select>
+                  <FormHelperText fontSize="sm" color="gray.600">
+                    Students will join this course's session
+                  </FormHelperText>
+                </FormControl>
+
+                {selectedCourse && (
+                  <Box
+                    p={4}
+                    bg="brand.50"
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor="brand.100"
+                  >
+                    <HStack spacing={3}>
+                      <Icon as={FiCheckCircle} color="brand.500" boxSize={5} />
+                      <VStack align="flex-start" spacing={0} flex={1}>
+                        <Text fontWeight="700" color="brand.900">
+                          {selectedCourse.title}
+                        </Text>
+                        <Text fontSize="xs" color="brand.700">
+                          {selectedCourse.mood_labels.length} mood options configured
+                        </Text>
+                      </VStack>
+                    </HStack>
+                  </Box>
+                )}
+              </VStack>
+            </CardBody>
+          </Card>
+
+          {/* Session Settings Card */}
+          <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+            <CardBody p={6}>
+              <VStack align="stretch" spacing={5}>
+                <HStack spacing={3}>
+                  <Icon as={FiAlertCircle} boxSize={6} color="accent.500" />
+                  <Heading size="md" fontWeight="700">
+                    Session Settings
+                  </Heading>
+                </HStack>
+
+                {/* Survey Requirement Toggle */}
+                <FormControl>
+                  <HStack
+                    justify="space-between"
+                    p={4}
+                    bg="gray.50"
+                    borderRadius="xl"
+                    border="2px solid"
+                    borderColor="gray.100"
+                  >
+                    <VStack align="flex-start" spacing={1} flex={1}>
+                      <FormLabel mb={0} fontWeight="700" fontSize="md">
+                        Require Survey
+                      </FormLabel>
+                      <Text fontSize="sm" color="gray.600">
+                        Students must complete the survey before joining
+                      </Text>
+                    </VStack>
+                    <Switch
+                      size="lg"
+                      isChecked={requireSurvey}
+                      onChange={(event) => setRequireSurvey(event.target.checked)}
+                      colorScheme="brand"
+                    />
+                  </HStack>
+                </FormControl>
+
+                {requireSurvey && (
+                  <Box
+                    p={4}
+                    bg="brand.50"
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor="brand.100"
+                  >
+                    <HStack spacing={2} fontSize="sm" color="brand.800">
+                      <Icon as={FiCheckCircle} />
+                      <Text fontWeight="600">
+                        Students will answer survey questions to get personalized recommendations
+                      </Text>
+                    </HStack>
+                  </Box>
+                )}
+
+                <Divider />
+
+                {/* Mood Prompt Input */}
+                <FormControl isRequired>
+                  <FormLabel fontWeight="700" fontSize="md" mb={2}>
+                    <HStack spacing={2}>
+                      <Icon as={FiMessageSquare} color="accent.500" />
+                      <Text>Mood Check Prompt</Text>
+                    </HStack>
+                  </FormLabel>
+                  <Input
+                    value={moodPrompt}
+                    onChange={(event) => setMoodPrompt(event.target.value)}
+                    placeholder="How are you feeling today?"
+                    size="lg"
+                    borderRadius="xl"
+                    border="2px solid"
+                    borderColor="gray.200"
+                    _hover={{ borderColor: 'accent.300' }}
+                    _focus={{
+                      borderColor: 'accent.400',
+                      boxShadow: '0 0 0 1px var(--chakra-colors-accent-400)',
+                    }}
+                  />
+                  <FormHelperText fontSize="sm" color="gray.600">
+                    This question will be shown to students when they join
+                  </FormHelperText>
+                </FormControl>
+
+                {/* Preview Box */}
+                <Box
+                  p={4}
+                  bg="accent.50"
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="accent.100"
+                >
+                  <VStack align="stretch" spacing={2}>
+                    <HStack spacing={2}>
+                      <Icon as={FiMessageSquare} color="accent.600" boxSize={4} />
+                      <Text fontSize="xs" fontWeight="700" color="accent.700">
+                        PREVIEW
+                      </Text>
+                    </HStack>
+                    <Text fontSize="md" fontWeight="600" color="accent.900">
+                      {moodPrompt || 'Your mood prompt will appear here...'}
+                    </Text>
+                  </VStack>
+                </Box>
+              </VStack>
+            </CardBody>
+          </Card>
+
+          {/* Error Alert */}
+          {sessionMutation.error instanceof ApiError && (
+            <Alert
+              status="error"
+              borderRadius="xl"
+              bg="red.50"
+              border="2px solid"
+              borderColor="red.200"
+            >
+              <AlertIcon color="red.500" />
+              <AlertDescription color="red.700" fontWeight="600">
+                {sessionMutation.error.message}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Action Buttons */}
+          <Card
+            borderRadius="2xl"
+            bgGradient="linear(135deg, brand.50, accent.50)"
+            border="2px solid"
+            borderColor="brand.100"
+          >
+            <CardBody p={6}>
+              <VStack spacing={4}>
+                <VStack spacing={1}>
+                  <Text fontSize="lg" fontWeight="700" color="gray.800">
+                    Ready to start?
+                  </Text>
+                  <Text fontSize="sm" color="gray.600" textAlign="center">
+                    Students will be able to join immediately after creation
+                  </Text>
+                </VStack>
+
+                <HStack spacing={4} w="full">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/teacher/sessions')}
+                    size="lg"
+                    borderRadius="xl"
+                    fontWeight="600"
+                    borderWidth="2px"
+                    flex={1}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    colorScheme="brand"
+                    isLoading={sessionMutation.isPending}
+                    loadingText="Creating Session..."
+                    isDisabled={!courseId}
+                    size="lg"
+                    borderRadius="xl"
+                    fontWeight="600"
+                    flex={2}
+                    leftIcon={<Icon as={FiPlayCircle} />}
+                  >
+                    Launch Session
+                  </Button>
+                </HStack>
+              </VStack>
+            </CardBody>
+          </Card>
+
+          {/* Helper Info Box */}
+          <Box
+            p={4}
+            bg="blue.50"
+            borderRadius="xl"
+            border="1px solid"
+            borderColor="blue.100"
+          >
+            <HStack spacing={3} align="start">
+              <Icon as={FiAlertCircle} color="blue.500" boxSize={5} mt={0.5} />
+              <VStack align="start" spacing={1}>
+                <Text fontSize="sm" fontWeight="700" color="blue.900">
+                  💡 Quick Tip
+                </Text>
+                <Text fontSize="sm" color="blue.800">
+                  After creating the session, you'll get a QR code and join link to share with
+                  your students. They can join instantly!
+                </Text>
+              </VStack>
+            </HStack>
+          </Box>
+        </Stack>
+      </Box>
     </Stack>
   )
 }

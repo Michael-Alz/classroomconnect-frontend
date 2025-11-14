@@ -1,391 +1,603 @@
+// src/pages/teacher/TeacherSessionDashboardPage.tsx
 import {
-	Alert,
-	AlertDescription,
-	AlertIcon,
-	Badge,
-	Box,
-	Button,
-	Card,
-	CardBody,
-	CardHeader,
-	Heading,
-	Stack,
-	Switch,
-	Text,
-	useToast,
-} from '@chakra-ui/react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  Badge,
+  Box,
+  Button,
+  Card,
+  CardBody,
+  Heading,
+  Stack,
+  Switch,
+  Text,
+  useToast,
+  HStack,
+  VStack,
+  Icon,
+  SimpleGrid,
+  Flex,
+  Avatar,
+  Divider,
+  IconButton,
+  Tooltip,
+} from '@chakra-ui/react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useMemo } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
-	closeSession,
-	getSessionDashboard,
-	getSessionSubmissions,
-	listCourseSessions,
-} from '../../api/sessions';
-import QRCode from 'react-qr-code';
+  FiUsers,
+  FiClock,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiCopy,
+  FiArrowLeft,
+  FiActivity,
+  FiTrendingUp,
+} from 'react-icons/fi'
+import {
+  closeSession,
+  getSessionDashboard,
+  getSessionSubmissions,
+  listCourseSessions,
+} from '../../api/sessions'
+import QRCode from 'react-qr-code'
 
 export function TeacherSessionDashboardPage() {
-	const { sessionId } = useParams<{ sessionId: string }>();
-	const queryClient = useQueryClient();
-	const toast = useToast();
+  const { sessionId } = useParams<{ sessionId: string }>()
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  const navigate = useNavigate()
 
-	const sessionQuery = useQuery({
-		queryKey: ['sessionDashboard', sessionId],
-		queryFn: () => getSessionDashboard(sessionId ?? ''),
-		enabled: Boolean(sessionId),
-	});
+  const sessionQuery = useQuery({
+    queryKey: ['sessionDashboard', sessionId],
+    queryFn: () => getSessionDashboard(sessionId ?? ''),
+    enabled: Boolean(sessionId),
+  })
 
-	const submissionsQuery = useQuery({
-		queryKey: ['sessionSubmissions', sessionId],
-		queryFn: () => getSessionSubmissions(sessionId ?? ''),
-		enabled: Boolean(sessionId),
-	});
+  const submissionsQuery = useQuery({
+    queryKey: ['sessionSubmissions', sessionId],
+    queryFn: () => getSessionSubmissions(sessionId ?? ''),
+    enabled: Boolean(sessionId),
+  })
 
-	const sessionListQuery = useQuery({
-		queryKey: ['courseSessions', sessionQuery.data?.course_id],
-		queryFn: () => listCourseSessions(sessionQuery.data?.course_id ?? ''),
-		enabled: Boolean(sessionQuery.data?.course_id),
-	});
+  const sessionListQuery = useQuery({
+    queryKey: ['courseSessions', sessionQuery.data?.course_id],
+    queryFn: () => listCourseSessions(sessionQuery.data?.course_id ?? ''),
+    enabled: Boolean(sessionQuery.data?.course_id),
+  })
 
-	const closeMutation = useMutation({
-		mutationFn: () => closeSession(sessionId ?? ''),
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ['sessionDashboard', sessionId],
-			});
-			if (sessionQuery.data?.course_id) {
-				queryClient.invalidateQueries({
-					queryKey: ['courseSessions', sessionQuery.data.course_id],
-				});
-			}
-		},
-	});
+  const closeMutation = useMutation({
+    mutationFn: () => closeSession(sessionId ?? ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['sessionDashboard', sessionId],
+      })
+      if (sessionQuery.data?.course_id) {
+        queryClient.invalidateQueries({
+          queryKey: ['courseSessions', sessionQuery.data.course_id],
+        })
+      }
+      toast({
+        title: 'Session closed',
+        description: 'No more submissions will be accepted',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      })
+    },
+  })
 
-	const sessionMeta = useMemo(() => {
-		return sessionListQuery.data?.find(
-			(item) => item.session_id === sessionId
-		);
-	}, [sessionListQuery.data, sessionId]);
+  const sessionMeta = useMemo(() => {
+    return sessionListQuery.data?.find((item) => item.session_id === sessionId)
+  }, [sessionListQuery.data, sessionId])
 
-	const isSessionOpen = !sessionMeta?.closed_at;
+  const isSessionOpen = !sessionMeta?.closed_at
 
-	useEffect(() => {
-		if (!isSessionOpen) return;
-		const interval = setInterval(() => {
-			queryClient.invalidateQueries({
-				queryKey: ['sessionDashboard', sessionId],
-			});
-			queryClient.invalidateQueries({
-				queryKey: ['sessionSubmissions', sessionId],
-			});
-		}, 3000);
-		return () => clearInterval(interval);
-	}, [isSessionOpen, queryClient, sessionId]);
+  // Real-time updates every 3 seconds
+  useEffect(() => {
+    if (!isSessionOpen) return
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({
+        queryKey: ['sessionDashboard', sessionId],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['sessionSubmissions', sessionId],
+      })
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [isSessionOpen, queryClient, sessionId])
 
-	const handleCloseSession = () => {
-		if (!isSessionOpen) return;
-		const confirmed = window.confirm(
-			'Closing the session will stop new submissions. Are you sure you want to proceed?'
-		);
-		if (!confirmed) return;
-		closeMutation.mutate();
-	};
+  const handleCloseSession = () => {
+    if (!isSessionOpen) return
+    const confirmed = window.confirm(
+      'Closing the session will stop new submissions. Are you sure?'
+    )
+    if (!confirmed) return
+    closeMutation.mutate()
+  }
 
-	const handleCopyLink = async () => {
-		if (!sessionMeta) return;
-		const joinUrl = `${window.location.origin}/session/run/${sessionMeta.join_token}`;
-		if (!navigator?.clipboard?.writeText) {
-			toast({
-				title: 'Clipboard unavailable',
-				description: 'Please copy the link manually.',
-				status: 'warning',
-				duration: 3000,
-				isClosable: true,
-			});
-			return;
-		}
-		try {
-			await navigator.clipboard.writeText(joinUrl);
-			toast({
-				title: 'Join link copied',
-				status: 'success',
-				duration: 2000,
-				isClosable: true,
-			});
-		} catch (error) {
-			toast({
-				title: 'Unable to copy link',
-				description:
-					error instanceof Error ? error.message : 'Unknown error',
-				status: 'error',
-				duration: 3000,
-				isClosable: true,
-			});
-		}
-	};
+  const handleCopyLink = async () => {
+    if (!sessionMeta) return
+    const joinUrl = `${window.location.origin}/session/run/${sessionMeta.join_token}`
+    try {
+      await navigator.clipboard.writeText(joinUrl)
+      toast({
+        title: 'Link copied! 🎉',
+        description: 'Students can now join the session',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      })
+    } catch (error) {
+      toast({
+        title: 'Copy failed',
+        description: error instanceof Error ? error.message : 'Please copy manually',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+    }
+  }
 
-	if (sessionQuery.isLoading) {
-		return <Text>Loading session dashboard…</Text>;
-	}
+  if (sessionQuery.isLoading) {
+    return (
+      <Box textAlign="center" py={12}>
+        <Text color="gray.500" fontSize="lg">
+          Loading session dashboard...
+        </Text>
+      </Box>
+    )
+  }
 
-	if (sessionQuery.isError || !sessionQuery.data) {
-		return (
-			<Alert status="error">
-				<AlertIcon />
-				<AlertDescription>
-					Unable to load session dashboard.
-				</AlertDescription>
-			</Alert>
-		);
-	}
+  if (sessionQuery.isError || !sessionQuery.data) {
+    return (
+      <Alert
+        status="error"
+        borderRadius="xl"
+        bg="red.50"
+        border="2px solid"
+        borderColor="red.200"
+      >
+        <AlertIcon color="red.500" />
+        <AlertDescription color="red.700" fontWeight="600">
+          Unable to load session dashboard
+        </AlertDescription>
+      </Alert>
+    )
+  }
 
-	const dashboard = sessionQuery.data;
+  const dashboard = sessionQuery.data
+  const totalParticipants = dashboard.participants.length
+  const moodEntries = Object.entries(dashboard.mood_summary)
 
-	return (
-		<Stack spacing={6}>
-			<Card>
-				<CardHeader>
-					<Heading size="md">{dashboard.course_title}</Heading>
-					<Text fontSize="sm" color="gray.500">
-						Session {dashboard.session_id}
-					</Text>
-				</CardHeader>
-				<CardBody>
-					<Stack spacing={3}>
-						<Text>
-							Survey required:{' '}
-							<strong>
-								{dashboard.require_survey ? 'Yes' : 'No'}
-							</strong>
-						</Text>
-						<Stack
-							direction={{ base: 'column', sm: 'row' }}
-							spacing={2}
-						>
-							{Object.entries(dashboard.mood_summary).map(
-								([mood, count]) => (
-									<Badge key={mood} colorScheme="purple">
-										{mood}: {count}
-									</Badge>
-								)
-							)}
-						</Stack>
-						{sessionMeta ? (
-							<Stack spacing={2}>
-								<Text fontSize="sm" color="gray.600">
-									Started{' '}
-									{new Date(
-										sessionMeta.started_at
-									).toLocaleString()}
-								</Text>
-								<Stack
-									direction={{ base: 'column', md: 'row' }}
-									spacing={4}
-									align="center"
-								>
-									<Stack spacing={1}>
-										<Text fontWeight="bold">
-											Join token
-										</Text>
-										<Badge alignSelf="flex-start">
-											{sessionMeta.join_token}
-										</Badge>
-										<Button
-											variant="outline"
-											size="sm"
-											onClick={handleCopyLink}
-										>
-											Copy join link
-										</Button>
-									</Stack>
-									{sessionMeta.qr_url ? (
-										<Box textAlign="center">
-											<QRCode
-												value={sessionMeta.qr_url}
-												size={128}
-											/>
-											<Text
-												fontSize="xs"
-												color="gray.500"
-												mt={2}
-											>
-												Scan to join
-											</Text>
-										</Box>
-									) : null}
-									<Stack
-										direction="row"
-										align="center"
-										spacing={3}
-									>
-										<Text fontWeight="bold">
-											Session status
-										</Text>
-										<Switch
-											colorScheme="green"
-											isChecked={isSessionOpen}
-											onChange={handleCloseSession}
-											isDisabled={
-												!isSessionOpen ||
-												closeMutation.isPending
-											}
-										/>
-										<Text fontSize="sm" color="gray.600">
-											{isSessionOpen
-												? 'Open for responses'
-												: 'Closed'}
-										</Text>
-									</Stack>
-									{closeMutation.isError ? (
-										<Text fontSize="xs" color="red.500">
-											Unable to close the session. Please
-											try again.
-										</Text>
-									) : null}
-								</Stack>
-							</Stack>
-						) : null}
-					</Stack>
-				</CardBody>
-			</Card>
+  return (
+    <Stack spacing={8}>
+      {/* Header */}
+      <Box>
+        <Button
+          leftIcon={<Icon as={FiArrowLeft} />}
+          variant="ghost"
+          onClick={() => navigate('/teacher/sessions')}
+          mb={4}
+          fontWeight="600"
+        >
+          Back to Sessions
+        </Button>
 
-			<Card>
-				<CardHeader>
-					<Heading size="sm">Participants</Heading>
-				</CardHeader>
-				<CardBody>
-					{dashboard.participants.length ? (
-						<Stack spacing={4}>
-							{dashboard.participants.map((participant) => (
-								<Card
-									key={`${participant.mode}-${participant.display_name}`}
-								>
-									<CardBody>
-										<Stack spacing={2}>
-											<Heading size="sm">
-												{participant.display_name}
-											</Heading>
-											<Text fontSize="sm">
-												Mode: {participant.mode} | Mood:{' '}
-												{participant.mood}
-											</Text>
-											<Text fontSize="sm">
-												Learning style:{' '}
-												{participant.learning_style ??
-													'n/a'}
-											</Text>
-											{participant.recommended_activity ? (
-												<Stack spacing={1}>
-													<Text
-														fontWeight="bold"
-														fontSize="sm"
-													>
-														Recommended activity:
-													</Text>
-													<Text>
-														{
-															participant
-																.recommended_activity
-																.activity.name
-														}
-													</Text>
-													<Text
-														fontSize="sm"
-														color="gray.600"
-													>
-														{
-															participant
-																.recommended_activity
-																.activity
-																.summary
-														}
-													</Text>
-												</Stack>
-											) : null}
-										</Stack>
-									</CardBody>
-								</Card>
-							))}
-						</Stack>
-					) : (
-						<Text>No participants yet.</Text>
-					)}
-				</CardBody>
-			</Card>
+        <Flex
+          direction={{ base: 'column', md: 'row' }}
+          justify="space-between"
+          align={{ base: 'flex-start', md: 'center' }}
+          gap={4}
+        >
+          <HStack spacing={4} align="flex-start">
+            <Box
+              bgGradient={
+                isSessionOpen
+                  ? 'linear(135deg, #10B981, #059669)'
+                  : 'linear(135deg, gray.400, gray.600)'
+              }
+              color="white"
+              p={4}
+              borderRadius="2xl"
+              boxShadow="lg"
+            >
+              <Icon as={FiActivity} boxSize={8} />
+            </Box>
+            <VStack align="flex-start" spacing={1}>
+              <Heading size="lg" fontWeight="800">
+                {dashboard.course_title}
+              </Heading>
+              <HStack spacing={3} fontSize="sm" color="gray.600">
+                <Badge
+                  colorScheme={isSessionOpen ? 'green' : 'gray'}
+                  fontSize="xs"
+                  px={3}
+                  py={1}
+                  borderRadius="full"
+                  fontWeight="700"
+                >
+                  {isSessionOpen ? '🟢 LIVE' : '⚫ CLOSED'}
+                </Badge>
+                <Text fontWeight="600">
+                  Session {sessionId?.slice(0, 8)}...
+                </Text>
+              </HStack>
+            </VStack>
+          </HStack>
 
-			<Card>
-				<CardHeader>
-					<Heading size="sm">Submissions</Heading>
-					<Text fontSize="xs" color="gray.500">
-						Includes student and guest entries for this session.
-					</Text>
-				</CardHeader>
-				<CardBody>
-					{submissionsQuery.isLoading ? (
-						<Text>Loading submissions…</Text>
-					) : submissionsQuery.isError ? (
-						<Alert status="error">
-							<AlertIcon />
-							<AlertDescription>
-								Unable to load submissions.
-							</AlertDescription>
-						</Alert>
-					) : submissionsQuery.data?.items.length ? (
-						<Stack spacing={3}>
-							{submissionsQuery.data.items.map(
-								(submission, index) => (
-									<Box
-										key={index}
-										borderWidth="1px"
-										borderRadius="md"
-										p={4}
-									>
-										<Stack spacing={1}>
-											<Text fontWeight="semibold">
-												{submission.student_full_name ||
-													submission.student_name ||
-													'Guest'}
-											</Text>
-											<Text
-												fontSize="sm"
-												color="gray.500"
-											>
-												Mood: {submission.mood} •
-												Learning style:{' '}
-												{submission.learning_style ??
-													'n/a'}
-											</Text>
-											<Text
-												fontSize="xs"
-												color="gray.500"
-											>
-												Submitted{' '}
-												{new Date(
-													submission.created_at
-												).toLocaleString()}
-											</Text>
-											<Text fontSize="sm">
-												Status: {submission.status}
-											</Text>
-											{submission.is_baseline_update ? (
-												<Badge
-													w="fit-content"
-													colorScheme="purple"
-												>
-													Baseline updated
-												</Badge>
-											) : null}
-										</Stack>
-									</Box>
-								)
-							)}
-						</Stack>
-					) : (
-						<Text>No submissions yet.</Text>
-					)}
-				</CardBody>
-			</Card>
-		</Stack>
-	);
+          {isSessionOpen && (
+            <Button
+              leftIcon={<Icon as={FiAlertCircle} />}
+              colorScheme='white'
+			  color="red.600"
+              onClick={handleCloseSession}
+              isLoading={closeMutation.isPending}
+              size="lg"
+              borderRadius="xl"
+              fontWeight="600"
+            >
+              Close Session
+            </Button>
+          )}
+        </Flex>
+      </Box>
+
+      {/* Stats Cards */}
+      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
+        {/* Participants Count */}
+        <Card
+           borderRadius="xl"
+          border="2px solid"
+          borderColor="blue.100"
+          bg="blue.50"
+        >
+          <CardBody p={6}>
+            <HStack spacing={4}>
+              <Box bg="whiteAlpha.300" p={3} borderRadius="xl">
+                <Icon as={FiUsers} boxSize={6} />
+              </Box>
+              <VStack align="flex-start" spacing={0}>
+                <Text fontSize="sm" fontWeight="600" opacity={0.9}>
+                  Participants
+                </Text>
+                <Text fontSize="3xl" fontWeight="800">
+                  {totalParticipants}
+                </Text>
+              </VStack>
+            </HStack>
+          </CardBody>
+        </Card>
+
+        {/* Survey Status */}
+        
+        {/* Session Time */}
+        <Card
+           borderRadius="xl"
+          border="2px solid"
+          borderColor="red.100"
+          bg="red.50"
+        >
+          <CardBody p={6}>
+            <HStack spacing={4}>
+              <Box bg="whiteAlpha.300" p={3} borderRadius="xl">
+                <Icon as={FiClock} boxSize={6} />
+              </Box>
+              <VStack align="flex-start" spacing={0}>
+                <Text fontSize="sm" fontWeight="600" opacity={0.9}>
+                  Started
+                </Text>
+                <Text fontSize="md" fontWeight="700">
+                  {sessionMeta
+                    ? new Date(sessionMeta.started_at).toLocaleTimeString()
+                    : 'N/A'}
+                </Text>
+              </VStack>
+            </HStack>
+          </CardBody>
+        </Card>
+      </SimpleGrid>
+
+      {/* QR Code & Join Info */}
+      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
+        {/* QR Code Card */}
+        {sessionMeta?.qr_url && (
+          <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+            <CardBody p={8}>
+              <VStack spacing={6}>
+                <VStack spacing={2}>
+                  <Icon as={FiTrendingUp} boxSize={8} color="brand.500" />
+                  <Heading size="md" fontWeight="700">
+                    Join Session
+                  </Heading>
+                  <Text color="gray.600" textAlign="center">
+                    Students scan this QR code to participate
+                  </Text>
+                </VStack>
+
+                <Box
+                  p={6}
+                  bg="white"
+                  borderRadius="2xl"
+                  border="4px solid"
+                  borderColor="brand.100"
+                  boxShadow="lg"
+                >
+                  <QRCode value={sessionMeta.qr_url} size={200} />
+                </Box>
+
+                <VStack spacing={2} w="full">
+                  <HStack w="full" justify="center" spacing={2}>
+                    <Badge
+                      fontSize="lg"
+                      px={4}
+                      py={2}
+                      borderRadius="xl"
+                      colorScheme="brand"
+                      fontWeight="800"
+                    >
+                      {sessionMeta.join_token}
+                    </Badge>
+                    <Tooltip label="Copy join link">
+                      <IconButton
+                        aria-label="Copy link"
+                        icon={<Icon as={FiCopy} />}
+                        onClick={handleCopyLink}
+                        colorScheme="brand"
+                        variant="ghost"
+                        size="lg"
+                      />
+                    </Tooltip>
+                  </HStack>
+                  <Text fontSize="sm" color="gray.500">
+                    Or share the join token above
+                  </Text>
+                </VStack>
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Mood Summary Card */}
+        <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+          <CardBody p={6}>
+            <VStack align="stretch" spacing={4}>
+              <HStack spacing={3}>
+                <Icon as={FiTrendingUp} boxSize={6} color="accent.500" />
+                <Heading size="md" fontWeight="700">
+                  Mood Distribution
+                </Heading>
+              </HStack>
+
+              {moodEntries.length > 0 ? (
+                <Stack spacing={3}>
+                  {moodEntries.map(([mood, count]) => (
+                    <HStack key={mood} justify="space-between">
+                      <HStack spacing={3}>
+                        <Box
+                          w="12px"
+                          h="12px"
+                          borderRadius="full"
+                          bgGradient="linear(to-r, accent.400, accent.600)"
+                        />
+                        <Text fontWeight="600" textTransform="capitalize">
+                          {mood}
+                        </Text>
+                      </HStack>
+                      <Badge colorScheme="accent" fontSize="md" px={3} py={1} borderRadius="full">
+                        {count}
+                      </Badge>
+                    </HStack>
+                  ))}
+                </Stack>
+              ) : (
+                <VStack py={8} spacing={2}>
+                  <Icon as={FiUsers} boxSize={12} color="gray.300" />
+                  <Text color="gray.500">No mood data yet</Text>
+                </VStack>
+              )}
+            </VStack>
+          </CardBody>
+        </Card>
+      </SimpleGrid>
+
+      {/* Participants List */}
+      <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+        <CardBody p={6}>
+          <HStack spacing={3} mb={6}>
+            <Icon as={FiUsers} boxSize={6} color="brand.500" />
+            <Heading size="md" fontWeight="700">
+              Active Participants ({totalParticipants})
+            </Heading>
+            {isSessionOpen && (
+              <Badge colorScheme="green" fontSize="xs" px={2} py={1} borderRadius="full">
+                Live Updates
+              </Badge>
+            )}
+          </HStack>
+
+          {dashboard.participants.length > 0 ? (
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              {dashboard.participants.map((participant, idx) => (
+                <Card
+                  key={`${participant.mode}-${participant.display_name}-${idx}`}
+                  borderRadius="xl"
+                  border="2px solid"
+                  borderColor="gray.100"
+                  _hover={{ borderColor: 'brand.200', boxShadow: 'md' }}
+                  transition="all 0.2s"
+                >
+                  <CardBody p={5}>
+                    <VStack align="stretch" spacing={3}>
+                      <HStack spacing={3}>
+                        <Avatar
+                          name={participant.display_name}
+                          size="md"
+                          bg="brand.400"
+                          color="white"
+                          fontWeight="700"
+                        />
+                        <VStack align="flex-start" spacing={0} flex={1}>
+                          <Heading size="sm" fontWeight="700">
+                            {participant.display_name}
+                          </Heading>
+                          <HStack fontSize="xs" color="gray.500" spacing={2}>
+                            <Badge size="sm" colorScheme="purple">
+                              {participant.mode}
+                            </Badge>
+                            <Text>•</Text>
+                            <Text textTransform="capitalize">{participant.mood}</Text>
+                          </HStack>
+                        </VStack>
+                      </HStack>
+
+                      <Divider />
+
+                      <VStack align="stretch" spacing={2} fontSize="sm">
+                        <HStack justify="space-between">
+                          <Text color="gray.600">Learning Style:</Text>
+                          <Badge colorScheme="blue">
+                            {participant.learning_style ?? 'N/A'}
+                          </Badge>
+                        </HStack>
+
+                        {participant.recommended_activity && (
+                          <Box
+                            bg="green.50"
+                            p={3}
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor="green.200"
+                          >
+                            <VStack align="stretch" spacing={1}>
+                              <Text fontSize="xs" fontWeight="700" color="green.700">
+                                Recommended Activity:
+                              </Text>
+                              <Text fontWeight="600" color="green.900">
+                                {participant.recommended_activity.activity.name}
+                              </Text>
+                              <Text fontSize="xs" color="green.700">
+                                {participant.recommended_activity.activity.summary}
+                              </Text>
+                            </VStack>
+                          </Box>
+                        )}
+                      </VStack>
+                    </VStack>
+                  </CardBody>
+                </Card>
+              ))}
+            </SimpleGrid>
+          ) : (
+            <VStack py={12} spacing={4}>
+              <Box
+                bg="gray.50"
+                p={6}
+                borderRadius="full"
+                border="2px dashed"
+                borderColor="gray.200"
+              >
+                <Icon as={FiUsers} boxSize={12} color="gray.400" />
+              </Box>
+              <VStack spacing={1}>
+                <Text fontSize="lg" fontWeight="600" color="gray.700">
+                  Waiting for participants...
+                </Text>
+                <Text color="gray.500" textAlign="center">
+                  Students will appear here once they join the session
+                </Text>
+              </VStack>
+            </VStack>
+          )}
+        </CardBody>
+      </Card>
+
+      {/* Submissions Log */}
+      <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+        <CardBody p={6}>
+          <HStack spacing={3} mb={6}>
+            <Icon as={FiCheckCircle} boxSize={6} color="accent.500" />
+            <Heading size="md" fontWeight="700">
+              Submission History
+            </Heading>
+          </HStack>
+
+          {submissionsQuery.isLoading ? (
+            <Text color="gray.500">Loading submissions...</Text>
+          ) : submissionsQuery.isError ? (
+            <Alert
+              status="error"
+              borderRadius="xl"
+              bg="red.50"
+              border="2px solid"
+              borderColor="red.200"
+            >
+              <AlertIcon color="red.500" />
+              <AlertDescription color="red.700" fontWeight="600">
+                Unable to load submissions
+              </AlertDescription>
+            </Alert>
+          ) : submissionsQuery.data?.items.length ? (
+            <Stack spacing={3}>
+              {submissionsQuery.data.items.map((submission, index) => (
+                <Box
+                  key={index}
+                  borderWidth="2px"
+                  borderColor="gray.100"
+                  borderRadius="xl"
+                  p={4}
+                  _hover={{ borderColor: 'brand.200', bg: 'brand.50' }}
+                  transition="all 0.2s"
+                >
+                  <HStack justify="space-between" align="start">
+                    <VStack align="flex-start" spacing={2}>
+                      <HStack spacing={2}>
+                        <Avatar
+                          name={
+                            submission.student_full_name ||
+                            submission.student_name ||
+                            'Guest'
+                          }
+                          size="sm"
+                          bg="accent.400"
+                          color="white"
+                        />
+                        <Text fontWeight="700">
+                          {submission.student_full_name ||
+                            submission.student_name ||
+                            'Guest'}
+                        </Text>
+                      </HStack>
+                      <HStack spacing={2} flexWrap="wrap" fontSize="sm">
+                        <Badge colorScheme="purple">{submission.mood}</Badge>
+                        <Badge colorScheme="blue">
+                          {submission.learning_style ?? 'N/A'}
+                        </Badge>
+                        {submission.is_baseline_update && (
+                          <Badge colorScheme="green">Baseline Updated</Badge>
+                        )}
+                      </HStack>
+                      <Text fontSize="xs" color="gray.500">
+                        {new Date(submission.created_at).toLocaleString()}
+                      </Text>
+                    </VStack>
+                    <Badge colorScheme="brand" fontSize="xs" px={2} py={1}>
+                      {submission.status}
+                    </Badge>
+                  </HStack>
+                </Box>
+              ))}
+            </Stack>
+          ) : (
+            <VStack py={8} spacing={2}>
+              <Icon as={FiCheckCircle} boxSize={12} color="gray.300" />
+              <Text color="gray.500">No submissions yet</Text>
+            </VStack>
+          )}
+        </CardBody>
+      </Card>
+    </Stack>
+  )
 }

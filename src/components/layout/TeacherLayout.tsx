@@ -1,133 +1,492 @@
+// src/layouts/TeacherLayout.tsx
 import {
   Box,
   Button,
-  Card,
-  CardBody,
+  Container,
   Flex,
   Heading,
   Stack,
   Text,
+  VStack,
+  HStack,
+  Icon,
+  Divider,
+  useColorModeValue,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+  useDisclosure,
+  IconButton,
+  Avatar,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+  useBreakpointValue,
 } from '@chakra-ui/react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, Link as RouterLink, useNavigate } from 'react-router-dom'
+import {
+  FiBook,
+  FiClipboard,
+  FiPlayCircle,
+  FiGrid,
+  FiPlus,
+  FiList,
+  FiLayers,
+  FiMenu,
+  FiLogOut,
+  FiSettings,
+} from 'react-icons/fi'
+import { useAuth } from '../../contexts/AuthContext'
+import { useEffect } from 'react'
 
 interface SectionLink {
   label: string
   to: string
+  icon?: any
   excludePrefixes?: string[]
 }
 
 interface Section {
   title: string
+  icon: any
   links: SectionLink[]
 }
 
 const sections: Section[] = [
   {
     title: 'Courses',
-    links: [{ label: 'Courses overview', to: '/teacher/courses' }],
+    icon: FiBook,
+    links: [{ label: 'Courses overview', to: '/teacher/courses', icon: FiList }],
   },
   {
     title: 'Surveys',
+    icon: FiClipboard,
     links: [
       {
         label: 'Survey templates',
         to: '/teacher/surveys',
+        icon: FiList,
         excludePrefixes: ['/teacher/surveys/new'],
       },
-      { label: 'Create survey', to: '/teacher/surveys/new' },
+      { label: 'Create survey', to: '/teacher/surveys/new', icon: FiPlus },
     ],
   },
   {
     title: 'Sessions',
+    icon: FiPlayCircle,
     links: [
       {
         label: 'Session library',
         to: '/teacher/sessions',
+        icon: FiList,
         excludePrefixes: ['/teacher/sessions/new'],
       },
-      { label: 'Launch session', to: '/teacher/sessions/new' },
+      { label: 'Launch session', to: '/teacher/sessions/new', icon: FiPlus },
     ],
   },
   {
     title: 'Activities',
+    icon: FiGrid,
     links: [
       {
         label: 'Activity library',
         to: '/teacher/activities',
+        icon: FiList,
         excludePrefixes: ['/teacher/activities/new'],
       },
-      { label: 'Create activity', to: '/teacher/activities/new' },
+      { label: 'Create activity', to: '/teacher/activities/new', icon: FiPlus },
       {
         label: 'Activity types',
         to: '/teacher/activity-types',
+        icon: FiLayers,
         excludePrefixes: ['/teacher/activity-types/new'],
       },
-      { label: 'Create activity type', to: '/teacher/activity-types/new' },
+      { label: 'Create activity type', to: '/teacher/activity-types/new', icon: FiPlus },
     ],
   },
 ]
 
-export function TeacherLayout() {
+// Sidebar Content Component
+function SidebarContent({ onClose }: { onClose?: () => void }) {
   const location = useLocation()
+  const sidebarBg = useColorModeValue('white', 'gray.800')
 
   return (
-    <Flex direction={{ base: 'column', lg: 'row' }} gap={6}>
-      <Card
-        flexShrink={0}
-        minW={{ base: '100%', lg: '280px' }}
-        position={{ base: 'relative', lg: 'sticky' }}
-        top={{ lg: 4 }}
-        height="fit-content"
-      >
-        <CardBody>
-          <Heading size="sm" mb={4}>
-            Teacher Tools
-          </Heading>
-          <Stack spacing={6}>
-            {sections.map((section) => (
-              <Box key={section.title}>
-                <Heading size="xs" textTransform="uppercase" color="gray.500" mb={2}>
-                  {section.title}
-                </Heading>
-                <Stack spacing={2}>
-                  {section.links.map((link) => {
-                    const excludes = link.excludePrefixes ?? []
-                    const isExcluded = excludes.some((prefix) =>
-                      location.pathname.startsWith(prefix),
-                    )
-                    const isBaseMatch =
-                      location.pathname === link.to ||
-                      location.pathname.startsWith(`${link.to}/`)
-                    const isActive = !isExcluded && isBaseMatch
-                    return (
-                      <Button
-                        key={link.to}
-                        as={NavLink}
-                        to={link.to}
-                        justifyContent="flex-start"
-                        variant={isActive ? 'solid' : 'ghost'}
-                        colorScheme={isActive ? 'brand' : undefined}
-                        size="sm"
-                      >
-                        {link.label}
-                      </Button>
-                    )
-                  })}
-                </Stack>
-              </Box>
-            ))}
-          </Stack>
-        </CardBody>
-      </Card>
-      <Box flex="1">
-        <Stack spacing={4}>
-          <Text fontSize="sm" color="gray.500" display={{ base: 'none', lg: 'block' }}>
-            Use the grouped navigation to move through the course, survey, activity, and session
-            workflows.
+    <Box
+      bg={sidebarBg}
+      h="full"
+      overflowY="auto"
+      css={{
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#CBD5E0',
+          borderRadius: '24px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          background: '#A0AEC0',
+        },
+      }}
+    >
+      <Stack spacing={6} p={6}>
+        {/* Welcome Message */}
+        <Box
+          bg="brand.50"
+          p={4}
+          borderRadius="2xl"
+          border="1px solid"
+          borderColor="brand.100"
+        >
+          <Text fontSize="sm" fontWeight="600" color="brand.700">
+            👋 Welcome back!
           </Text>
-          <Outlet />
-        </Stack>
+          <Text fontSize="xs" color="gray.600" mt={1}>
+            Manage your classroom tools
+          </Text>
+        </Box>
+
+        {/* Navigation Sections */}
+        {sections.map((section, idx) => (
+          <Box key={section.title}>
+            {idx > 0 && <Divider mb={4} />}
+            
+            <HStack spacing={2} mb={3}>
+              <Icon as={section.icon} color="brand.500" boxSize={4} />
+              <Heading
+                size="xs"
+                textTransform="uppercase"
+                color="gray.600"
+                letterSpacing="wide"
+                fontWeight="700"
+              >
+                {section.title}
+              </Heading>
+            </HStack>
+
+            <Stack spacing={1}>
+              {section.links.map((link) => {
+                const excludes = link.excludePrefixes ?? []
+                const isExcluded = excludes.some((prefix) =>
+                  location.pathname.startsWith(prefix),
+                )
+                const isBaseMatch =
+                  location.pathname === link.to ||
+                  location.pathname.startsWith(`${link.to}/`)
+                const isActive = !isExcluded && isBaseMatch
+
+                return (
+                  <Button
+                    key={link.to}
+                    as={NavLink}
+                    to={link.to}
+                    leftIcon={link.icon ? <Icon as={link.icon} /> : undefined}
+                    justifyContent="flex-start"
+                    variant={isActive ? 'solid' : 'ghost'}
+                    colorScheme={isActive ? 'brand' : undefined}
+                    size="sm"
+                    w="full"
+                    fontWeight={isActive ? '700' : '500'}
+                    borderRadius="xl"
+                    bg={isActive ? undefined : 'transparent'}
+                    _hover={{
+                      bg: isActive ? undefined : 'brand.50',
+                      transform: 'translateX(4px)',
+                    }}
+                    transition="all 0.2s"
+                    onClick={onClose}
+                  >
+                    {link.label}
+                  </Button>
+                )
+              })}
+            </Stack>
+          </Box>
+        ))}
+
+        {/* Help Section */}
+        <Box
+          p={4}
+          bg="accent.50"
+          borderRadius="xl"
+          border="1px solid"
+          borderColor="accent.100"
+        >
+          <HStack spacing={2} mb={2}>
+            <Text fontSize="lg">💡</Text>
+            <Text fontSize="sm" fontWeight="600" color="accent.700">
+              Need Help?
+            </Text>
+          </HStack>
+          <Text fontSize="xs" color="gray.600" mb={3}>
+            Check out our quick start guide
+          </Text>
+          <Button size="xs" colorScheme="accent" w="full" borderRadius="lg">
+            View Guide
+          </Button>
+        </Box>
+      </Stack>
+    </Box>
+  )
+}
+
+export function TeacherLayout() {
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const sidebarBg = useColorModeValue('white', 'gray.800')
+  const borderColor = useColorModeValue('gray.100', 'gray.700')
+  
+  // Detect if we're on desktop breakpoint
+  const isDesktop = useBreakpointValue({ base: false, lg: true })
+
+  // Close drawer on route change
+  useEffect(() => {
+    onClose()
+  }, [location.pathname, onClose])
+
+  // Close drawer when resizing to desktop
+  useEffect(() => {
+    if (isDesktop && isOpen) {
+      onClose()
+    }
+  }, [isDesktop, isOpen, onClose])
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  return (
+    <Box minH="100vh" bg="surfaces.canvas">
+      {/* Top Navigation Bar - ALWAYS VISIBLE */}
+      <Box
+        position="sticky"
+        top="0"
+        zIndex="sticky"
+        bg="white"
+        borderBottomWidth="2px"
+        borderColor="gray.100"
+        backdropFilter="blur(10px)"
+        boxShadow="sm"
+      >
+        <Container maxW="8xl" py={4}>
+          <Flex align="center" justify="space-between">
+            {/* Left: Menu + Logo */}
+            <HStack spacing={3}>
+              {/* Hamburger - Only on mobile/tablet */}
+              <IconButton
+                aria-label="Open menu"
+                icon={<Icon as={FiMenu} boxSize={6} />}
+                onClick={onOpen}
+                variant="ghost"
+                colorScheme="brand"
+                size="lg"
+                display={{ base: 'flex', lg: 'none' }}
+              />
+              
+              {/* Logo */}
+              <RouterLink to="/teacher/courses">
+                <HStack spacing={3} _hover={{ transform: 'scale(1.02)' }} transition="all 0.2s">
+                  <Box
+                    bgGradient="linear(to-r, brand.400, brand.600)"
+                    color="white"
+                    p={2}
+                    borderRadius="xl"
+                    fontSize="xl"
+                    boxShadow="md"
+                  >
+                    📚
+                  </Box>
+                  <VStack align="flex-start" spacing={0}>
+                    <Text fontSize="xl" fontWeight="800" color="gray.800">
+                      ClassConnect
+                    </Text>
+                    <Text fontSize="xs" color="brand.600" fontWeight="600">
+                      Teacher Portal
+                    </Text>
+                  </VStack>
+                </HStack>
+              </RouterLink>
+            </HStack>
+
+            {/* Right: Quick Actions + User Menu */}
+            <HStack spacing={3}>
+              {/* Quick Action - New Session */}
+              <Button
+                as={RouterLink}
+                to="/teacher/sessions/new"
+                leftIcon={<Icon as={FiPlayCircle} />}
+                colorScheme="brand"
+                size="md"
+                borderRadius="xl"
+                fontWeight="600"
+                display={{ base: 'none', md: 'flex' }}
+              >
+                New Session
+              </Button>
+
+              {/* User Menu */}
+              <Menu placement="bottom-end">
+                <MenuButton
+                  as={Button}
+                  variant="ghost"
+                  borderRadius="full"
+                  p={0}
+                  h="auto"
+                  _hover={{ transform: 'scale(1.05)' }}
+                  transition="all 0.2s"
+                >
+                  <Avatar
+                    size="sm"
+                    name="Teacher"
+                    bg="brand.400"
+                    color="white"
+                    fontWeight="700"
+                  >
+                    👨‍🏫
+                  </Avatar>
+                </MenuButton>
+                <MenuList
+                  borderRadius="xl"
+                  border="2px solid"
+                  borderColor="gray.100"
+                  boxShadow="xl"
+                  py={2}
+                  minW="220px"
+                  zIndex={1500}
+                >
+                  <Box px={4} py={3}>
+                    <Text fontSize="sm" fontWeight="700" color="gray.800">
+                      Teacher Account
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      Teacher Portal
+                    </Text>
+                  </Box>
+                  <MenuDivider />
+                  <MenuItem
+                    icon={<Icon as={FiSettings} />}
+                    borderRadius="lg"
+                    mx={2}
+                    fontSize="sm"
+                    fontWeight="500"
+                  >
+                    Settings
+                  </MenuItem>
+                  <MenuDivider />
+                  <MenuItem
+                    icon={<Icon as={FiLogOut} />}
+                    color="red.600"
+                    borderRadius="lg"
+                    mx={2}
+                    fontSize="sm"
+                    fontWeight="500"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            </HStack>
+          </Flex>
+        </Container>
       </Box>
-    </Flex>
+
+      <Container maxW="8xl" py={{ base: 4, md: 8 }}>
+        <Flex gap={8} direction={{ base: 'column', lg: 'row' }}>
+          {/* Desktop Sidebar - Hidden on mobile */}
+          <Box
+            flexShrink={0}
+            w="280px"
+            position="sticky"
+            top="88px"
+            height="calc(100vh - 120px)"
+            display={{ base: 'none', lg: 'block' }}
+          >
+            <Box
+              bg={sidebarBg}
+              borderRadius="3xl"
+              boxShadow="xl"
+              border="2px solid"
+              borderColor={borderColor}
+              h="full"
+              overflowY="auto"
+              css={{
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                  marginTop: '24px',
+                  marginBottom: '24px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: '#CBD5E0',
+                  borderRadius: '24px',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  background: '#A0AEC0',
+                },
+              }}
+            >
+              <SidebarContent />
+            </Box>
+          </Box>
+
+          {/* Mobile Drawer - Add key prop to reset state */}
+          <Drawer 
+            key={location.pathname}
+            isOpen={isOpen} 
+            placement="left" 
+            onClose={onClose} 
+            size="xs"
+          >
+            <DrawerOverlay />
+            <DrawerContent>
+              <DrawerCloseButton />
+              <DrawerHeader borderBottomWidth="1px">
+                <VStack align="flex-start" spacing={0}>
+                  <Text fontSize="lg" fontWeight="800">
+                    Teacher Portal
+                  </Text>
+                  <Text fontSize="xs" color="gray.500" fontWeight="normal">
+                    ClassConnect
+                  </Text>
+                </VStack>
+              </DrawerHeader>
+              <DrawerBody p={0}>
+                <SidebarContent onClose={onClose} />
+              </DrawerBody>
+            </DrawerContent>
+          </Drawer>
+
+          {/* Main Content Area */}
+          <Box flex="1" minW={0}>
+            {/* Page Content */}
+            <Box
+              bg={sidebarBg}
+              borderRadius={{ base: '2xl', md: '3xl' }}
+              p={{ base: 4, sm: 6, md: 8 }}
+              boxShadow="xl"
+              border="2px solid"
+              borderColor={borderColor}
+              minH="500px"
+            >
+              <Outlet />
+            </Box>
+          </Box>
+        </Flex>
+      </Container>
+    </Box>
   )
 }
