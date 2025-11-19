@@ -35,6 +35,7 @@ import {
   FiArrowLeft,
   FiActivity,
   FiTrendingUp,
+  FiExternalLink,
 } from 'react-icons/fi'
 import {
   closeSession,
@@ -42,7 +43,6 @@ import {
   getSessionSubmissions,
   listCourseSessions,
 } from '../../api/sessions'
-import QRCode from 'react-qr-code'
 
 export function TeacherSessionDashboardPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
@@ -139,6 +139,11 @@ export function TeacherSessionDashboardPage() {
         isClosable: true,
       })
     }
+  }
+
+  const handleOpenShareScreen = () => {
+    if (!sessionMeta?.qr_url) return
+    window.open(sessionMeta.qr_url, '_blank', 'noopener,noreferrer')
   }
 
   if (sessionQuery.isLoading) {
@@ -313,20 +318,21 @@ export function TeacherSessionDashboardPage() {
                     Join Session
                   </Heading>
                   <Text color="gray.600" textAlign="center">
-                    Students scan this QR code to participate
+                    Launch a standalone join screen with the QR code for your students
                   </Text>
                 </VStack>
 
-                <Box
-                  p={6}
-                  bg="white"
-                  borderRadius="2xl"
-                  border="4px solid"
-                  borderColor="brand.100"
-                  boxShadow="lg"
+                <Button
+                  leftIcon={<Icon as={FiExternalLink} />}
+                  colorScheme="brand"
+                  size="lg"
+                  borderRadius="xl"
+                  fontWeight="700"
+                  onClick={handleOpenShareScreen}
+                  w="full"
                 >
-                  <QRCode value={sessionMeta.qr_url} size={200} />
-                </Box>
+                  Open Join Screen
+                </Button>
 
                 <VStack spacing={2} w="full">
                   <HStack w="full" justify="center" spacing={2}>

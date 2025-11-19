@@ -12,7 +12,7 @@ import { GuestJoinPage } from './pages/public/GuestJoinPage'
 import { ScanPage } from './pages/public/ScanPage'
 import { SessionRunPage } from './pages/public/SessionRunPage'
 import { SessionResultPage } from './pages/public/SessionResultPage'
-import { JoinRedirectPage } from './pages/public/JoinRedirectPage'
+import { SessionSharePage } from './pages/public/SessionSharePage'
 import { StudentDashboardPage } from './pages/student/StudentDashboardPage'
 import { TeacherCoursesPage } from './pages/teacher/TeacherCoursesPage'
 import { TeacherCourseDetailPage } from './pages/teacher/TeacherCourseDetailPage'
@@ -76,7 +76,7 @@ function App() {
         </Route>
         <Route path="guest/join" element={<GuestJoinPage />} />
         <Route path="scan" element={<ScanPage />} />
-        <Route path="join" element={<JoinRedirectPage />} />
+        <Route path="join" element={<SessionSharePage />} />
         <Route path="session/run/:token" element={<SessionRunPage />} />
         <Route path="session/run/:token/result" element={<SessionResultPage />} />
         <Route
