@@ -26,7 +26,7 @@ import {
   Wrap,
 } from '@chakra-ui/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   FiArrowLeft,
@@ -36,9 +36,11 @@ import {
   FiCode,
   FiSave,
   FiAlertCircle,
+  FiPlayCircle,
 } from 'react-icons/fi'
 import { getActivity, updateActivity } from '../../api/activities'
 import { ApiError } from '../../api/client'
+import { ActivityContentDisplay } from '../../components/activity/ActivityContentDisplay'
 
 export function TeacherActivityDetailPage() {
   const { activityId } = useParams<{ activityId: string }>()
@@ -57,6 +59,14 @@ export function TeacherActivityDetailPage() {
   const [tagInput, setTagInput] = useState('')
   const [contentJson, setContentJson] = useState('')
   const [jsonError, setJsonError] = useState<string | null>(null)
+
+  const previewContent = useMemo(() => {
+    try {
+      return contentJson.trim() ? JSON.parse(contentJson) : null
+    } catch {
+      return null
+    }
+  }, [contentJson])
 
   useEffect(() => {
     if (!activityQuery.data) return
@@ -131,6 +141,13 @@ export function TeacherActivityDetailPage() {
     summary !== activity.summary ||
     JSON.stringify(tags.sort()) !== JSON.stringify([...activity.tags].sort()) ||
     contentJson !== JSON.stringify(activity.content_json, null, 2)
+  const previewPayload = {
+    name: name || activity.name,
+    summary: summary || activity.summary,
+    type: activity.type,
+    tags,
+    content_json: (previewContent ?? activity.content_json) as Record<string, unknown>,
+  }
 
   return (
     <Stack spacing={8}>
@@ -194,6 +211,38 @@ export function TeacherActivityDetailPage() {
           )}
         </Flex>
       </Box>
+
+      {/* Activity Preview */}
+      <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
+        <CardBody p={6}>
+          <VStack align="stretch" spacing={4}>
+            <HStack spacing={3}>
+              <Icon as={FiPlayCircle} boxSize={6} color="brand.500" />
+              <Heading size="md" fontWeight="700">
+                Activity Preview
+              </Heading>
+            </HStack>
+            <Text fontSize="sm" color="gray.600">
+              This is the kid-friendly view of the activity using the current content details.
+            </Text>
+            {previewContent === null ? (
+              <Alert
+                status="warning"
+                borderRadius="xl"
+                bg="yellow.50"
+                border="2px solid"
+                borderColor="yellow.200"
+              >
+                <AlertIcon color="yellow.600" />
+                <AlertDescription color="yellow.700" fontWeight="600">
+                  Fix the JSON to update the preview. Showing the last saved version instead.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <ActivityContentDisplay activity={previewPayload} />
+          </VStack>
+        </CardBody>
+      </Card>
 
       {/* Basic Information Card */}
       <Card borderRadius="2xl" border="2px solid" borderColor="gray.100" boxShadow="xl">
@@ -375,6 +424,26 @@ export function TeacherActivityDetailPage() {
                   </Text>
                 </VStack>
               </HStack>
+            </Box>
+
+            <Box
+              p={4}
+              borderRadius="lg"
+              border="1px solid"
+              borderColor="gray.100"
+              bg="gray.50"
+            >
+              <HStack justify="space-between" align="center" mb={3}>
+                <Heading size="sm" fontWeight="800" color="gray.700">
+                  Live Student Preview
+                </Heading>
+                {previewContent === null ? (
+                  <Badge colorScheme="yellow" borderRadius="full" px={3}>
+                    Fix JSON to update preview
+                  </Badge>
+                ) : null}
+              </HStack>
+              <ActivityContentDisplay activity={previewPayload} showHeader />
             </Box>
 
             <FormControl>

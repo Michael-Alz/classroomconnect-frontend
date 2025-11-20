@@ -11,7 +11,6 @@ import {
   Icon,
   Flex,
   useColorModeValue,
-  Link,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import {
@@ -24,7 +23,6 @@ import {
   FiImage,
   FiUserPlus,
 } from "react-icons/fi";
-import { PiGraduationCapBold } from "react-icons/pi";
 
 export function LandingPage() {
   const cardBg = useColorModeValue("white", "white");

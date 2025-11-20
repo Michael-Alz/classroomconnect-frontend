@@ -817,7 +817,8 @@ def seed_surveys(db: Session) -> None:
         },
     ]
 
-    existing = {row.title: row for row in db.query(base_seed.SurveyTemplate).all()}
+    existing = {row.title: row for row in db.query(
+        base_seed.SurveyTemplate).all()}
     for spec in survey_specs:
         if spec["title"] in existing:
             print(f"ℹ️  Survey already exists, skipping: {spec['title']}")
@@ -953,7 +954,7 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
                 "duration_sec": 151,
                 "notes": (
                     "5 Steps to Wellbeing Animation — animated video outlining five steps to "
-                    "improve mental health and wellbeing. After watching, students can act out "
+                    "improve mental health and wellbeing. After watching, you can act out "
                     "one step (e.g., talking to a friend) and use flags: green = I'll do it, "
                     "yellow = maybe, red = not yet."
                 ),
@@ -969,7 +970,7 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
                 "duration_sec": 389,
                 "notes": (
                     "Wellbeing For Children: Confidence And Self-Esteem — animation about "
-                    "confidence, self-esteem and wellbeing. Students can role-play confident "
+                    "confidence, self-esteem and wellbeing. You and your classmates can role-play confident "
                     "vs. unconfident body language and use flags green/yellow/red for how "
                     "good the posture/behaviour is for wellbeing."
                 ),
@@ -985,8 +986,8 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
                 "duration_sec": 222,
                 "notes": (
                     "The Reflection in Me — short about self-image and self-acceptance. "
-                    "Students can complete a reflection (e.g., 'When I look in the mirror, "
-                    "I feel…') and optionally use flags to show how they feel about themselves."
+                    "You can complete a reflection (e.g., 'When I look in the mirror, "
+                    "I feel…') and optionally use flags to show how you feel about yourself."
                 ),
             },
         },
@@ -1000,8 +1001,7 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
                 "duration_sec": 36016,
                 "notes": (
                     "Music Track #1 — calm, repetitive, no lyrics. Works as background music "
-                    "for independent work or calming transitions, especially for students with "
-                    "ADHD or attention challenges. You can start/stop at any time."
+                    "for independent work or calming transitions. You can start/stop at any time."
                 ),
             },
         },
@@ -1017,7 +1017,7 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
                 "duration_sec": 1516,
                 "notes": (
                     "Music Track #2 — soft, continuous melody with minimal volume changes. "
-                    "Good for emotional regulation and reducing anxiety while students work. "
+                    "Good for emotional regulation and reducing anxiety while working. "
                     "You can start/stop at any time."
                 ),
             },
@@ -1037,7 +1037,7 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
                 "active",
             ],
             "content_json": {
-                "file_url": "http://localhost:8000/activity/personal-world-map.pdf",
+                "file_url": "https://classconnect-static-files.s3.us-east-1.amazonaws.com/personal-world-map.pdf",
                 "instructions": (
                     "Draw a map of your personal world showing important places in your life.\n"
                     "1. Draw your home in the center of the map\n"
@@ -1066,14 +1066,14 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
                 "passive",
             ],
             "content_json": {
-                "file_url": "http://localhost:8000/activity/map-reading-practice.pdf",
+                "file_url": "https://classconnect-static-files.s3.us-east-1.amazonaws.com/map-reading-practice.pdf",
                 "instructions": (
                     "Part 1: Match the symbol with its meaning (draw a line to connect)\n"
-                    "[Symbol] 🏠 → House/Building\n"
-                    "[Symbol] 🌳 → Park/Forest\n"
-                    "[Symbol] 🛣️ → Road\n"
-                    "[Symbol] 🏫 → School\n"
-                    "[Symbol] 🏥 → Hospital\n\n"
+                    "🏠 → House/Building\n"
+                    "🌳 → Park/Forest\n"
+                    "🛣️ → Road\n"
+                    "🏫 → School\n"
+                    "🏥 → Hospital\n\n"
                     "Part 2: Compass Directions\n"
                     "1. If you face North, which direction is to your right? __________\n"
                     "2. If you face South, which direction is behind you? __________\n"
@@ -1097,7 +1097,7 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
                 "passive",
             ],
             "content_json": {
-                "file_url": "http://localhost:8000/activity/body-systems-quick-check.pdf",
+                "file_url": "https://classconnect-static-files.s3.us-east-1.amazonaws.com/body-systems-quick-check.pdf",
                 "instructions": (
                     "Part 1: Match the body system with its main function\n"
                     "1. Circulatory System    → A. Moves blood through the body\n"
@@ -1166,10 +1166,12 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
         },
     ]
 
-    existing_types = {row.type_name: row for row in db.query(base_seed.ActivityType).all()}
+    existing_types = {row.type_name: row for row in db.query(
+        base_seed.ActivityType).all()}
     for entry in activity_type_seed_data:
         if entry["type_name"] in existing_types:
-            print(f"ℹ️  Activity type already exists, skipping: {entry['type_name']}")
+            print(
+                f"ℹ️  Activity type already exists, skipping: {entry['type_name']}")
             continue
         db.add(base_seed.ActivityType(**entry))
     db.commit()
@@ -1180,7 +1182,8 @@ def seed_activity_types_and_activities(db: Session) -> Dict[str, base_seed.Activ
         "creator_email": "seed@system.local",
     }
 
-    existing_activities = {row.name: row for row in db.query(base_seed.Activity).all()}
+    existing_activities = {
+        row.name: row for row in db.query(base_seed.Activity).all()}
     created: Dict[str, base_seed.Activity] = {}
     for entry in activity_seed_data:
         payload = {**entry, **seed_creator}

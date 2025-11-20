@@ -11,7 +11,35 @@ export class ApiError extends Error {
 	}
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000';
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
+
+function resolveApiBase() {
+	const configured = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000';
+
+	// When someone opens the app from another device (e.g., phone on the same Wi‑Fi),
+	// a localhost API URL won't work. If we detect that situation, swap the hostname
+	// to the one serving the frontend so the backend on the dev machine is reachable.
+	if (typeof window !== 'undefined') {
+		try {
+			const url = new URL(configured);
+			const isLocalApiHost = LOCAL_HOSTNAMES.has(url.hostname);
+			const isRemoteClient = !LOCAL_HOSTNAMES.has(window.location.hostname);
+
+			if (isLocalApiHost && isRemoteClient) {
+				url.hostname = window.location.hostname;
+				return url.toString().replace(/\/$/, '');
+			}
+
+			return url.toString().replace(/\/$/, '');
+		} catch {
+			// Fall through to configured value if URL parsing fails
+		}
+	}
+
+	return configured;
+}
+
+const API_BASE = resolveApiBase();
 
 type ApiClientOptions = RequestInit & {
 	skipAuth?: boolean;

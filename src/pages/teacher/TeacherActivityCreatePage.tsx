@@ -23,13 +23,12 @@ import {
   Badge,
   Divider,
   Text,
-  Link,
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
 } from '@chakra-ui/react'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -272,19 +271,9 @@ export function TeacherActivityCreatePage() {
                   </Menu>
                 </FormControl>
 
-                <Link
-                  as={RouterLink}
-                  to="/teacher/activity-types/new"
-                  color="purple.600"
-                  fontWeight="600"
-                  fontSize="sm"
-                  _hover={{ color: 'purple.700', textDecoration: 'underline' }}
-                >
-                  <HStack spacing={1}>
-                    <Icon as={FiPlus} boxSize={4} />
-                    <Text>Missing a type? Create one</Text>
-                  </HStack>
-                </Link>
+                <Text color="purple.700" fontWeight="600" fontSize="sm">
+                  Missing a type? Please contact your administrator.
+                </Text>
 
                 {selectedType && (
                   <Box

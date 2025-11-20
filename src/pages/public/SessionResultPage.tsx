@@ -11,10 +11,13 @@ import {
   Heading,
   Stack,
   Text,
-  Textarea,
+  Icon,
+  Flex,
 } from '@chakra-ui/react'
 import { useLocation, useNavigate, useParams, Navigate } from 'react-router-dom'
 import type { PublicJoinSubmitResponse } from '../../api/types'
+import { FiSmile } from 'react-icons/fi'
+import { ActivityContentDisplay } from '../../components/activity/ActivityContentDisplay'
 
 type ResultPageState = {
   submission: PublicJoinSubmitResponse
@@ -52,7 +55,7 @@ export function SessionResultPage() {
   }
 
   return (
-    <Stack spacing={6} maxW="3xl" mx="auto">
+    <Stack spacing={6} maxW="5xl" mx="auto" px={{ base: 4, md: 0 }}>
       <Card>
         <CardHeader>
           <Heading size="md">{courseTitle || 'Session recommendation'}</Heading>
@@ -61,25 +64,48 @@ export function SessionResultPage() {
           </Text>
         </CardHeader>
         <CardBody>
-          <Stack spacing={4}>
-            <Stack spacing={1}>
-              <Text fontWeight="bold" fontSize="lg">
-                {activity.name}
-              </Text>
-              <Text color="gray.600">{activity.summary}</Text>
-              <Badge alignSelf="flex-start">{activity.type}</Badge>
-            </Stack>
-            <Box>
-              <Text fontWeight="semibold" mb={2}>
-                Activity details
-              </Text>
-              <Textarea
-                value={JSON.stringify(activity.content_json, null, 2)}
-                isReadOnly
-                fontFamily="mono"
-                rows={6}
-              />
-            </Box>
+          <Stack spacing={6}>
+            <Flex
+              gap={4}
+              align={{ base: 'flex-start', md: 'center' }}
+              direction={{ base: 'column', md: 'row' }}
+              bg="brand.50"
+              borderRadius="xl"
+              p={4}
+              border="1px solid"
+              borderColor="brand.100"
+            >
+              <Box
+                bgGradient="linear(135deg, brand.200, brand.400)"
+                color="white"
+                borderRadius="full"
+                p={3}
+                boxShadow="lg"
+              >
+                <Icon as={FiSmile} boxSize={8} />
+              </Box>
+              <Stack spacing={2}>
+                <Heading size="md" fontWeight="800">
+                  {activity.name}
+                </Heading>
+                <Text color="gray.700">{activity.summary}</Text>
+                <Badge colorScheme="brand" w="fit-content">
+                  {activity.type}
+                </Badge>
+              </Stack>
+            </Flex>
+
+            <ActivityContentDisplay
+              activity={{
+                name: activity.name,
+                summary: activity.summary,
+                type: activity.type,
+                content_json: activity.content_json,
+              }}
+              showHeader={false}
+              showTags={false}
+            />
+
             {submission.message ? (
               <Alert status="success">
                 <AlertIcon />

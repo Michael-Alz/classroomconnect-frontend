@@ -33,10 +33,6 @@ export function TeacherActivityTypesPage() {
   })
 
   const totalTypes = activityTypesQuery.data?.length || 0
-  const totalRequiredFields =
-    activityTypesQuery.data?.reduce((sum, type) => sum + type.required_fields.length, 0) || 0
-  const totalOptionalFields =
-    activityTypesQuery.data?.reduce((sum, type) => sum + type.optional_fields.length, 0) || 0
 
   return (
     <Stack spacing={8}>

@@ -15,7 +15,6 @@ import {
   Icon,
   Box,
   Flex,
-  Divider,
   Wrap,
   WrapItem,
 } from '@chakra-ui/react'

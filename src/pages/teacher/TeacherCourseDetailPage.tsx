@@ -24,8 +24,6 @@ import {
   HStack,
   VStack,
   Icon,
-  Flex,
-  Divider,
 } from '@chakra-ui/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
@@ -34,10 +32,8 @@ import {
   FiArrowLeft,
   FiBookOpen,
   FiCheckCircle,
-  FiGrid,
   FiZap,
   FiSave,
-  FiAlertCircle,
   FiTag,
   FiRefreshCw,
 } from 'react-icons/fi'

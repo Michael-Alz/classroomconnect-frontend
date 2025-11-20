@@ -32,7 +32,7 @@ export function SessionRunPage() {
   const location = useLocation()
   const guestJoinState = (location.state as GuestJoinState | null) ?? null
   const auth = useAuth()
-  const { token: authToken, isStudent } = auth
+  const { token: authToken } = auth
   const navigate = useNavigate()
   const guestStorageKey = joinToken ? `session_guest_${joinToken}` : null
   const storedGuest = useMemo(() => {
@@ -153,11 +153,6 @@ export function SessionRunPage() {
   const currentQuestion = isSurveyStep ? sessionData?.survey?.questions[surveyQuestionIndex] : null
   
   const isMoodStep = currentStep === totalSteps - 1
-
-  const surveyQuestions = useMemo(
-    () => sessionData?.survey?.questions ?? [],
-    [sessionData?.survey?.questions],
-  )
 
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
