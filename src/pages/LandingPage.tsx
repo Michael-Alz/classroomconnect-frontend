@@ -22,6 +22,11 @@ import {
   FiPlayCircle,
   FiImage,
   FiUserPlus,
+  FiZap,
+  FiTrendingUp,
+  FiSmartphone,
+  FiArchive,
+  FiAward,
 } from "react-icons/fi";
 
 export function LandingPage() {
@@ -202,6 +207,96 @@ export function LandingPage() {
           </Stack>
         </Container>
       </Box>
+
+      {/* Why ClassroomConnect */}
+      <Container maxW="7xl" py={{ base: 12, md: 16 }}>
+        <VStack spacing={3} textAlign="center" mb={{ base: 8, md: 10 }}>
+          <Heading fontSize={{ base: "3xl", md: "4xl" }} color="ink.800">
+            Learning That Adapts to Every Child
+          </Heading>
+          <Text fontSize={{ base: "md", md: "lg" }} color="ink.600" maxW="720px">
+            Mood check-ins and learning style surveys pair with a flexible activity library to
+            suggest the right experience for every student.
+          </Text>
+        </VStack>
+
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+          {[
+            {
+              icon: FiHeart,
+              title: "Mood-Based Learning",
+              copy:
+                "Students share how they feel and receive activities that match their emotional state for better focus.",
+              color: "purple",
+            },
+            {
+              icon: FiZap,
+              title: "Learning Style Profiles",
+              copy:
+                "Quick surveys surface visual, auditory, and kinesthetic preferences so lessons click faster.",
+              color: "blue",
+            },
+            {
+              icon: FiTrendingUp,
+              title: "Real-Time Insights",
+              copy:
+                "Dashboards give teachers instant mood and style snapshots plus suggested activities.",
+              color: "orange",
+            },
+            {
+              icon: FiSmartphone,
+              title: "QR Code Sessions",
+              copy:
+                "Launch a session in seconds. Students scan a code to join—no passwords or account setup needed.",
+              color: "green",
+            },
+            {
+              icon: FiArchive,
+              title: "Activity Library",
+              copy:
+                "Different activity types ready to go—and tools for teachers to add their own ideas when needed.",
+              color: "pink",
+            },
+            {
+              icon: FiAward,
+              title: "AI-Powered Matching",
+              copy:
+                "Smart recommendations pair moods and learning styles with activities so getting started is easy.",
+              color: "teal",
+            },
+          ].map((item) => (
+            <Box
+              key={item.title}
+              bg={cardBg}
+              borderRadius="2xl"
+              p={{ base: 6, md: 7 }}
+              boxShadow="xl"
+              border="1px solid"
+              borderColor="blackAlpha.100"
+              _hover={{ transform: "translateY(-6px)", boxShadow: "2xl" }}
+              transition="all .2s"
+            >
+              <VStack align="flex-start" spacing={4}>
+                <Box
+                  bg={`${item.color}.50`}
+                  p={3}
+                  borderRadius="lg"
+                  display="inline-flex"
+                  boxShadow="md"
+                >
+                  <Icon as={item.icon} boxSize={7} color={`${item.color}.600`} />
+                </Box>
+                <Heading size="md" color="ink.800">
+                  {item.title}
+                </Heading>
+                <Text color="ink.600" fontSize="md">
+                  {item.copy}
+                </Text>
+              </VStack>
+            </Box>
+          ))}
+        </SimpleGrid>
+      </Container>
 
       {/* Audience cards */}
       <Container maxW="7xl" py={{ base: 12, md: 20 }}>
