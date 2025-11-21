@@ -14,16 +14,12 @@ export class ApiError extends Error {
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 function resolveApiBase() {
-	// Default to the production API gateway to avoid falling back to http on prod
-	const configured =
-		import.meta.env.VITE_API_BASE ??
-		'https://anecnqq6j2.execute-api.us-east-1.amazonaws.com';
+	const configured = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000';
 
 	// When someone opens the app from another device (e.g., phone on the same Wi‑Fi),
 	// a localhost API URL won't work. If we detect that situation, swap the hostname
 	// to the one serving the frontend so the backend on the dev machine is reachable.
-	// Limit this rewrite to dev to prevent production from ever switching protocols.
-	if (import.meta.env.DEV && typeof window !== 'undefined') {
+	if (typeof window !== 'undefined') {
 		try {
 			const url = new URL(configured);
 			const isLocalApiHost = LOCAL_HOSTNAMES.has(url.hostname);
